@@ -11,10 +11,8 @@ Le code organisateur n'est stocké que dans la base Supabase (table `tournoi_sec
 
 ## Plan B (sans internet)
 
-`secours/tournoi_secours.py` fait tourner sur un ordinateur la même page que le site (arbitrage, verrouillage des rondes, droits joueurs / organisateurs).
-Les téléphones s'y connectent par le wifi ou un partage de connexion, sans internet.
-
-```
-python tournoi_secours.py                          # le code organisateur est demandé au démarrage
-python tournoi_secours.py --etat sauvegarde.json   # reprendre l'état du site (Réglages > Télécharger une sauvegarde)
-```
+- `tournoi_hors_ligne.html` : le même tournoi dans un seul fichier, à ouvrir sur **un ordinateur**, sans internet ni serveur.
+  Une personne saisit tous les résultats ; les données restent dans le navigateur (ouvrir toujours avec le même navigateur).
+  Réglages > « Télécharger une sauvegarde » après chaque ronde ; « Reprendre une sauvegarde » pour repartir d'un fichier (y compris celui du site en ligne).
+- `secours/tournoi_secours.py` (option avancée) : même page servie en wifi local pour plusieurs téléphones, sans internet
+  (`python tournoi_secours.py`, le code organisateur est demandé au démarrage).
