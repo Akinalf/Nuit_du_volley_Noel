@@ -630,7 +630,7 @@ document.addEventListener('change',e=>{if(e.target.id==='myteam'){my=e.target.va
 
 (async function boot(){
   /*boot-admin*/admin=true;if(pin){try{const r=await rpc('check_pin',{p_pin:pin});ORGA=!!r.ok;if(!r.ok){pin='';localStorage.removeItem('pin');}}catch(e){}}if(!ORGA&&tab==='admin')tab='home';
-  await poll();setInterval(poll,2000);
+  await poll();setInterval(poll,5000);
 })();
 </script>
 </body>
