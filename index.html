@@ -271,6 +271,8 @@ function actScore(d){
     if(!rnd)throw new Err("Cette ronde n'a pas encore été générée.");
     const m=rnd[i];if(!m)throw new Err('Requête invalide.');
     const hasFinals=Object.keys(ST.finals).length>0,before=standings().map(s=>s.team).join();
+    /* Une ronde est verrouillée dès que la suivante est générée (ou dès qu'une finale est jouée, pour la dernière). Les organisateurs peuvent corriger. */
+    if(!d.orga&&((r<N_ROUNDS-1&&ST.rounds[r+1]!=null)||(r===N_ROUNDS-1&&hasFinals)))throw new Err('Ronde verrouillée : la suite du tournoi a déjà commencé. Voyez un organisateur pour corriger.');
     if(res===null){m.sa=null;m.sb=null;}else{m.sa=res[0];m.sb=res[1];}
     if(hasFinals&&(!ST.rounds.every(complete)||standings().map(s=>s.team).join()!==before))ST.finals={};
   }else if(d.kind==='final'){
@@ -469,15 +471,16 @@ function genBtn(r,re){
   const lab=r===0?(re?'Refaire le tirage au sort':'Tirage au sort de la ronde 1'):(re?'Régénérer la ronde '+(r+1):'Générer la ronde '+(r+1)+' (appariement suisse)');
   return `<button class="btn ${re?'sec':''}" data-gen="${r}" data-re="${re?1:0}" ${prevOk?'':'disabled'}>${lab}</button>${prevOk?'':'<p class="mut">Terminez d\'abord les scores de la ronde précédente.</p>'}`;
 }
+const roundLocked=r=>!ORGA&&((r<3&&S.rounds[r+1]&&S.rounds[r+1].exists)||(r===3&&S.finals.some(g=>g.matches.some(m=>m.sa!=null))));
 function rMatches(){
   let h='';
   if(admin&&swapSel)h+='<p class="mut">⇄ Touchez une autre équipe (même ronde) pour échanger.</p>';
   for(let r=0;r<4;r++){
     const info=S.rounds[r],sls=S.schedule.filter(s=>s.round===r+1);
-    h+=`<section class="card"><h3>Ronde ${r+1} <span class="chip ${info.complete?'done':''}">${info.exists?info.played+' / '+info.total:'—'}</span></h3>`;
+    h+=`<section class="card"><h3>Ronde ${r+1} <span class="chip ${info.complete?'done':''}">${info.exists?info.played+' / '+info.total:'—'}</span>${roundLocked(r)?' <span class="chip">verrouillée</span>':''}</h3>`;
     if(!info.exists){h+='<p class="mut">Pas encore générée.</p>';if(admin)h+=genBtn(r,false);}
     else{
-      sls.forEach(sl=>{h+=`<div class="wave">${esc(sl.label.split('–')[1].trim())} · ${hm(sl.start)}</div>`+sl.matches.map(m=>mrow(m,true)).join('');});
+      sls.forEach(sl=>{h+=`<div class="wave">${esc(sl.label.split('–')[1].trim())} · ${hm(sl.start)}</div>`+sl.matches.map(m=>mrow(m,!roundLocked(r))).join('');});
       if(admin&&info.played===0&&!(S.rounds[r+1]&&S.rounds[r+1].exists))h+=genBtn(r,true);
     }
     h+='</section>';
@@ -542,7 +545,7 @@ function openScore(ref){
 }
 function closeModal(){$('#modal').innerHTML='';}
 async function sendScore(ref,sa,sb,force){
-  const p=ref.split(':'),body=p[0]==='r'?{kind:'round',r:+p[1],m:+p[2],sa,sb,force}:{kind:'final',g:+p[1],k:p[2],sa,sb,force};
+  const p=ref.split(':'),body=p[0]==='r'?{kind:'round',r:+p[1],m:+p[2],sa,sb,force,orga:ORGA}:{kind:'final',g:+p[1],k:p[2],sa,sb,force};
   const res=await post('/api/score',body);
   if(!res)return;
   if(res.error){if(res.soft&&confirm(res.error+'\n\nEnregistrer quand même ?'))return sendScore(ref,sa,sb,true);return;}
