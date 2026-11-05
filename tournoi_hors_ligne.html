@@ -478,14 +478,22 @@ function myBlock(){
   if(my==='')return'<p class="mut">Choisissez votre équipe pour voir où et quand vous jouez.</p>';
   const t=+my,st=S.standings.find(s=>s.team===t);let nxt=null;
   for(const sl of S.schedule){if(sl.kind==='info')continue;const m=sl.matches.find(m=>(m.a.t===t||m.b.t===t)&&!(m.sa!=null&&m.sb!=null));if(m){nxt={sl,m};break;}}
+  let ar=null;
+  for(const sl of S.schedule){if(sl.kind==='info'||sl.done)continue;const m=sl.matches.find(m=>m.arb===t&&!(m.sa!=null&&m.sb!=null));if(m){ar={sl,m};break;}}
+  /* L'événement le plus proche (match ou arbitrage) passe en premier et en grand. */
+  const arFirst=ar&&(!nxt||ar.sl.start<nxt.sl.start);
+  const opp=nxt?(nxt.m.a.t===t?nxt.m.b:nxt.m.a):null;
+  const bigMatch=nxt?`<div style="margin-bottom:4px"><span class="chip nxt">Prochain match</span></div><div class="big">${hm(nxt.sl.start)} · Terrain ${nxt.m.terrain}</div><div>${esc(nxt.sl.label)} — contre <b>${esc(nm(opp))}</b></div>`:'';
+  const smallMatch=nxt?`<p style="margin-top:8px"><span class="chip nxt">Prochain match</span> ${hm(nxt.sl.start)} · Terrain ${nxt.m.terrain} — contre <b>${esc(nm(opp))}</b></p>`:'';
+  const bigArb=ar?`<div style="margin-bottom:4px"><span class="chip cur">Arbitrage</span></div><div class="big">${hm(ar.sl.start)} · Terrain ${ar.m.terrain}</div><div>${esc(ar.sl.label)} — vous arbitrez <b>${esc(nm(ar.m.a))}</b> contre <b>${esc(nm(ar.m.b))}</b></div>`:'';
+  const smallArb=ar?`<p style="margin-top:8px"><span class="chip cur">Arbitrage</span> ${hm(ar.sl.start)} · Terrain ${ar.m.terrain} — ${esc(nm(ar.m.a))} contre ${esc(nm(ar.m.b))}</p>`:'';
   let h='';
-  if(nxt){const opp=nxt.m.a.t===t?nxt.m.b:nxt.m.a;h+=`<div style="margin-bottom:4px"><span class="chip nxt">Prochain match</span></div><div class="big">${hm(nxt.sl.start)} · Terrain ${nxt.m.terrain}</div><div>${esc(nxt.sl.label)} — contre <b>${esc(nm(opp))}</b></div>`;}
+  if(arFirst)h+=bigArb+smallMatch;
+  else if(nxt)h+=bigMatch+smallArb;
   else if(S.schedule.filter(s=>s.kind!=='info').every(s=>s.done))h+='<div class="big">Tournoi terminé 🎉</div>';
   else if(S.rounds.every(r=>r.complete))h+='<div>Votre prochain match dépend du classement : voir l\'onglet Finales.</div>';
   else h+='<div>Votre prochain match sera connu dès que la ronde suivante est générée.</div>';
-  let ar=null;
-  for(const sl of S.schedule){if(sl.kind==='info'||sl.done)continue;const m=sl.matches.find(m=>m.arb===t&&!(m.sa!=null&&m.sb!=null));if(m){ar={sl,m};break;}}
-  if(ar)h+=`<p style="margin-top:8px"><span class="chip cur">Arbitrage</span> ${hm(ar.sl.start)} · Terrain ${ar.m.terrain} — ${esc(nm(ar.m.a))} contre ${esc(nm(ar.m.b))}</p>`;
+  if(arFirst&&!nxt)h+=S.rounds.every(r=>r.complete)?'<p class="mut">Votre prochain match dépend du classement : voir l\'onglet Finales.</p>':'<p class="mut">Votre prochain match sera connu dès que la ronde suivante est générée.</p>';
   if(st&&st.played>0)h+=`<p class="mut">Classement actuel : <b>${st.rank}${st.rank===1?'er':'e'}</b> — ${st.wins} victoire${st.wins>1?'s':''} sur ${st.played} match${st.played>1?'s':''}</p>`;
   return h;
 }
