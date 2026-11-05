@@ -21,7 +21,7 @@ nav button.on{background:var(--navy);color:#fff;font-weight:700}
 .card h3{margin:0 0 8px;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .mut{color:var(--mut);margin:4px 0}
 .chip{font-size:11px;font-weight:600;border-radius:20px;padding:2px 8px;background:#eef1f7;color:var(--mut)}
-.chip.cur{background:var(--red);color:#fff}.chip.done{background:#dff0df;color:var(--green)}
+.chip.cur{background:var(--red);color:#fff}.chip.nxt{background:var(--green);color:#fff}.chip.done{background:#dff0df;color:var(--green)}
 .big{font-size:22px;font-weight:800;color:var(--navy);margin:2px 0}
 label{display:block;font-weight:600;margin-bottom:6px}
 select,input[type=text],input[type=time],input[type=number],input[type=password]{width:100%;padding:10px;border:1px solid #cdd3df;border-radius:8px;font:inherit;background:#fff}
@@ -476,7 +476,7 @@ function myBlock(){
   const t=+my,st=S.standings.find(s=>s.team===t);let nxt=null;
   for(const sl of S.schedule){if(sl.kind==='info')continue;const m=sl.matches.find(m=>(m.a.t===t||m.b.t===t)&&!(m.sa!=null&&m.sb!=null));if(m){nxt={sl,m};break;}}
   let h='';
-  if(nxt){const opp=nxt.m.a.t===t?nxt.m.b:nxt.m.a;h+=`<div class="big">${hm(nxt.sl.start)} · Terrain ${nxt.m.terrain}</div><div>${esc(nxt.sl.label)} — contre <b>${esc(nm(opp))}</b></div>`;}
+  if(nxt){const opp=nxt.m.a.t===t?nxt.m.b:nxt.m.a;h+=`<div style="margin-bottom:4px"><span class="chip nxt">Prochain match</span></div><div class="big">${hm(nxt.sl.start)} · Terrain ${nxt.m.terrain}</div><div>${esc(nxt.sl.label)} — contre <b>${esc(nm(opp))}</b></div>`;}
   else if(S.schedule.filter(s=>s.kind!=='info').every(s=>s.done))h+='<div class="big">Tournoi terminé 🎉</div>';
   else if(S.rounds.every(r=>r.complete))h+='<div>Votre prochain match dépend du classement : voir l\'onglet Finales.</div>';
   else h+='<div>Votre prochain match sera connu dès que la ronde suivante est générée.</div>';
