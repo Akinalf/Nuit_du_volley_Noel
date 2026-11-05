@@ -33,18 +33,24 @@ select,input[type=text],input[type=time],input[type=number],input[type=password]
 .tm.w{font-weight:800}.tm[data-sw]{outline:1px dashed #b9c2d3;cursor:pointer}.tm.sel{background:#ffe08a}
 .sc{min-width:58px;text-align:center;font-weight:700;color:var(--navy);background:#eef1f7;border-radius:8px;padding:4px 8px}
 .sc.edit{background:var(--red);color:#fff;cursor:pointer}
-.tl{display:flex;flex-direction:column}
-.tli{display:grid;grid-template-columns:50px 20px minmax(0,1fr);column-gap:8px;padding-bottom:12px}.tli:last-child{padding-bottom:0}
-.k-arb{--k:#c2410c;--kl:#fde6d8}.k-mat{--k:var(--green);--kl:#dcf1e3}.k-no{--k:#64748b;--kl:#eef1f7}
-.tlt{font-size:18px;font-weight:800;padding-top:11px;color:var(--k);line-height:1.2}.k-no .tlt{font-size:14px;padding-top:13px}
-.tld{position:relative}.tld:before{content:"";position:absolute;left:9px;top:0;bottom:-12px;width:2px;background:#94a3b8}.tli:first-child .tld:before{top:20px}.tli:last-child .tld:before{display:none}
-.tld i{position:absolute;left:2px;top:15px;width:16px;height:16px;border-radius:50%;background:var(--k);border:3px solid var(--kl)}.k-no .tld i{background:#fff;border:2px solid #64748b}
-.tlc{border:1px solid var(--line);border-radius:14px;padding:10px 14px;background:#fff}.tli.f .tlc{border:2px solid var(--k);padding:11px 14px 12px;box-shadow:0 2px 6px rgba(20,40,75,.1)}
-.tlx{border:2px dashed #94a3b8!important;color:var(--mut);box-shadow:none!important;font-size:14px}
-.tlh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}
-.tlp{background:var(--k);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;padding:2px 9px;border-radius:20px}.tlg{font-size:12px;font-weight:700;color:var(--k)}
-.tlterr{font-size:22px;font-weight:800;color:var(--navy)}.tli.f .tlterr{font-size:28px}
-.rk{margin-top:12px;background:var(--navy);color:#fff;border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:14px}.rkn{font-size:36px;line-height:1;font-weight:800}.rkn small{font-size:18px}.rkl{font-size:11px;font-weight:700;letter-spacing:.08em;color:#cbd5e1}
+.k-arb{--k:#c2410c;--kl:#ffedd5;--kd:#9a3412}.k-mat{--k:var(--green);--kl:#dcf1e3;--kd:#166534}
+.pn{background:var(--navy);color:#fff;border-radius:18px;padding:16px;box-shadow:0 4px 12px rgba(20,40,75,.25)}
+.pnh{font-size:11px;font-weight:700;letter-spacing:.1em;color:#cbd5e1;margin-bottom:10px}
+.pnr{display:flex;align-items:center;gap:14px}
+.pnt{width:96px;height:96px;flex-shrink:0;background:#fff;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pnt small{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mut)}.pnt b{font-size:58px;line-height:1;font-weight:800;color:var(--k)}
+.pnc{display:flex;flex-direction:column;gap:8px;min-width:0;align-items:flex-start}
+.pnp{background:var(--kl);color:var(--kd);font-size:12px;font-weight:800;letter-spacing:.06em;padding:3px 12px;border-radius:20px}
+.pnd{font-size:44px;line-height:1;font-weight:800}
+.pnw{margin-top:12px;font-size:16px;line-height:1.4}.pns{font-size:13px;color:#cbd5e1;margin-top:2px}
+.sn{margin-top:10px;display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.snt{width:58px;height:58px;flex-shrink:0;background:var(--k);color:#fff;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.snt small{font-size:9px;font-weight:800;letter-spacing:.08em}.snt b{font-size:30px;line-height:1;font-weight:800}
+.snc{min-width:0}.snh{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--kd)}.snd{font-size:22px;font-weight:800;color:var(--navy)}
+.tlx{border:2px dashed #94a3b8;color:var(--mut);font-size:14px;display:block}
+.stg{margin-top:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stg div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center}
+.stg b{display:block;font-size:24px;line-height:1.2;font-weight:800;color:var(--navy)}.stg b small{font-size:13px}.stg span{font-size:12px;color:var(--mut)}
 .arb{grid-column:1/-1;font-size:12px;color:var(--mut);padding-left:36px;margin-top:-2px}.arb b{color:var(--navy)}.arb.me{color:#b45309;font-weight:700}.arb.me b{color:#b45309}
 .ml{grid-column:1/-1;font-size:11px;color:var(--mut);margin-top:6px;font-weight:600}
 .pl{display:grid;grid-template-columns:52px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);align-items:center}
@@ -489,30 +495,27 @@ function myBlock(){
   for(const sl of S.schedule){if(sl.kind==='info')continue;const m=sl.matches.find(m=>(m.a.t===t||m.b.t===t)&&!(m.sa!=null&&m.sb!=null));if(m){nxt={sl,m};break;}}
   let ar=null;
   for(const sl of S.schedule){if(sl.kind==='info'||sl.done)continue;const m=sl.matches.find(m=>m.arb===t&&!(m.sa!=null&&m.sb!=null));if(m){ar={sl,m};break;}}
-  /* Chronologie : l'événement le plus proche (match ou arbitrage) est en premier et mis en avant. */
+  /* L'événement le plus proche (match ou arbitrage) est en premier : grand panneau terrain ; le suivant en carte compacte. */
   const ev=[];
   if(ar)ev.push({k:'arb',sl:ar.sl,m:ar.m});
   if(nxt)ev.push({k:'mat',sl:nxt.sl,m:nxt.m});
   ev.sort((x,y)=>x.sl.start-y.sl.start);
-  const item=(e,i)=>{
-    const first=i===0,opp=e.k==='mat'?(e.m.a.t===t?e.m.b:e.m.a):null;
-    const tag=e.k==='mat'?'Prochain match':(first?'À faire en premier':'Ensuite');
-    const who=e.k==='arb'?`Vous arbitrez <b>${esc(nm(e.m.a))}</b> contre <b>${esc(nm(e.m.b))}</b>`:`Contre <b>${esc(nm(opp))}</b>`;
-    return`<div class="tli k-${e.k}${first?' f':''}"><div class="tlt">${hm(e.sl.start)}</div><div class="tld"><i></i></div><div class="tlc"><div class="tlh"><span class="tlp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><span class="tlg">${tag}</span></div><div class="tlterr">Terrain ${e.m.terrain}</div><div>${who}</div><div class="mut" style="font-size:13px;margin:2px 0 0">${esc(e.sl.label)}</div></div></div>`;
-  };
+  const who=e=>e.k==='arb'?`Vous arbitrez <b>${esc(nm(e.m.a))}</b> contre <b>${esc(nm(e.m.b))}</b>`:`Contre <b>${esc(nm(e.m.a.t===t?e.m.b:e.m.a))}</b>`;
+  const big=e=>`<div class="pn k-${e.k}"><div class="pnh">${e.k==='mat'?'PROCHAIN MATCH':'À FAIRE EN PREMIER'}</div><div class="pnr"><div class="pnt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="pnc"><span class="pnp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><div class="pnd">${hm(e.sl.start)}</div></div></div><div class="pnw">${who(e)}</div><div class="pns">${esc(e.sl.label)}</div></div>`;
+  const small=e=>`<div class="sn k-${e.k}"><div class="snt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="snc"><div class="snh">${e.k==='mat'?'ENSUITE · PROCHAIN MATCH':'ENSUITE · ARBITRAGE'}</div><div class="snd">${hm(e.sl.start)}</div><div>${who(e)}</div><div class="mut" style="font-size:12px;margin:2px 0 0">${esc(e.sl.label)}</div></div></div>`;
   let h='';
   if(ev.length){
-    h+='<div class="tl">'+ev.map(item).join('');
+    h+=big(ev[0]);
+    if(ev[1])h+=small(ev[1]);
     if(!nxt){
       const msg=S.rounds.every(r=>r.complete)?'Votre prochain match dépend du classement : voir l\'onglet Finales.':'Votre prochain match sera connu dès que la ronde suivante est générée.';
-      h+=`<div class="tli k-no"><div class="tlt">Après</div><div class="tld"><i></i></div><div class="tlc tlx">${msg}</div></div>`;
+      h+=`<div class="sn tlx">${msg}</div>`;
     }
-    h+='</div>';
   }
   else if(S.schedule.filter(s=>s.kind!=='info').every(s=>s.done))h+='<div class="big">Tournoi terminé 🎉</div>';
   else if(S.rounds.every(r=>r.complete))h+='<div>Votre prochain match dépend du classement : voir l\'onglet Finales.</div>';
   else h+='<div>Votre prochain match sera connu dès que la ronde suivante est générée.</div>';
-  if(st&&st.played>0)h+=`<div class="rk"><div class="rkn">${st.rank}<small>${st.rank===1?'er':'e'}</small></div><div><div class="rkl">CLASSEMENT ACTUEL</div><div>${st.wins} victoire${st.wins>1?'s':''} sur ${st.played} match${st.played>1?'s':''} joué${st.played>1?'s':''}</div></div></div>`;
+  if(st&&st.played>0)h+=`<div class="stg"><div><b>${st.rank}<small>${st.rank===1?'er':'e'}</small></b><span>Classement</span></div><div><b>${st.wins}</b><span>Victoire${st.wins>1?'s':''}</span></div><div><b>${st.played}</b><span>Match${st.played>1?'s':''} joué${st.played>1?'s':''}</span></div></div>`;
   return h;
 }
 function rHome(){
