@@ -339,7 +339,7 @@ function actReset(d){
 }
 const ACTIONS={score:actScore,gen_round:actGen,swap:actSwap,teams:actTeams,settings:actSettings,reset:actReset};
 
-/* ---------- Accès Supabase (lecture publique, écriture par fonction sans code) ---------- */
+/* ---------- Accès Supabase (lecture publique, écriture par fonction ; code organisateur pour les droits étendus) ---------- */
 const CFG={url:'https://vjkrjybfoulmpfrsbttw.supabase.co',key:'sb_publishable_fP4_xgc9cj263fWubqbEPg_VXbR68b0'};
 const HDR={'apikey':CFG.key,'Content-Type':'application/json'};
 if(/^eyJ/.test(CFG.key))HDR.Authorization='Bearer '+CFG.key;
@@ -370,7 +370,7 @@ async function act(name,body){
     const row=await fetchRow();
     ST=normalize(clone(row.data));
     try{fn(body);}catch(e){if(e instanceof Err)return{error:e.msg,soft:e.soft};return{error:'Requête invalide.'};}
-    const res=await rpc('save_state',{p_expected:row.version,p_data:ST});
+    const res=await rpc('save_state',{p_expected:row.version,p_data:ST,p_pin:pin||null});
     if(res&&res.ok)return{ok:true,state:buildView({version:res.version,data:ST})};
     if(res&&res.conflict){await sleep(60+Math.random()*240);continue;}
     return{error:(res&&res.error)||'Enregistrement impossible.',auth:!!(res&&res.auth)};
@@ -382,16 +382,17 @@ async function act(name,body){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
-/* L'onglet Réglages n'apparaît que sur les appareils des organisateurs (ouverts une fois avec le lien ?orga=reglages-noel). */
-const ORGA=(()=>{const L=location.search+location.hash;let f=/orga=reglages-noel/.test(L);try{if(f)localStorage.setItem('orga','1');else f=localStorage.getItem('orga')==='1';}catch(e){}return f;})();
-const TABS=[['home','Accueil'],['matches','Matchs'],['rank','Classement'],['finals','Finales']].concat(ORGA?[['admin','Réglages']]:[]);
-let S=null,tab=(!ORGA&&localStorage.getItem('tab')==='admin')?'home':(localStorage.getItem('tab')||'home'),pin=localStorage.getItem('pin')||'',admin=false,my=localStorage.getItem('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
+/* Mode organisateur : le code est vérifié par le serveur (fonctions check_pin / save_state). Les joueurs n'ont pas l'onglet Réglages. */
+let ORGA=false;
+const TABS_BASE=[['home','Accueil'],['matches','Matchs'],['rank','Classement'],['finals','Finales']];
+const tabsList=()=>TABS_BASE.concat(ORGA?[['admin','Réglages']]:[]);
+let S=null,tab=localStorage.getItem('tab')||'home',pin=localStorage.getItem('pin')||'',admin=false,my=localStorage.getItem('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
 const nm=side=>side.t!=null?S.teams[side.t]:(side.label||'À définir');
 
 async function post(path,body,okMsg){
   const name=path.split('/').pop();
   let res;try{res=await act(name,body);}catch(e){toast('Connexion perdue');return null;}
-  if(res.error){toast(res.error);if(res.auth){admin=false;pin='';localStorage.removeItem('pin');render();}return res;}
+  if(res.error){toast(res.error);if(res.auth){ORGA=false;pin='';localStorage.removeItem('pin');render();}return res;}
   S=res.state;lastVer=S.version;render();if(okMsg)toast(okMsg);return res;
 }
 let tt;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),2600);}
@@ -413,14 +414,14 @@ function drawHeader(){
   $('#hdr').innerHTML=`<div><b>${esc(S?S.settings.title:'Tournoi de volley')}</b><small>Rondes suisses · 12 équipes · 3 terrains</small></div><div class="st ${online?'ok':'ko'}">${online?'● en direct':'● hors ligne'}</div>`;
 }
 function drawTabs(){
-  $('#tabs').innerHTML=TABS.map(t=>`<button data-tab="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('');
+  $('#tabs').innerHTML=tabsList().map(t=>`<button data-tab="${t[0]}" class="${tab===t[0]?'on':''}">${t[1]}</button>`).join('');
 }
 
 /* ----- éléments communs ----- */
 function mrow(m,ed){
   const p=m.sa!=null&&m.sb!=null,ref=m.ref.join(':');
   const known=m.a.t!=null&&m.b.t!=null;
-  const canSwap=admin&&ed&&!p&&m.ref[0]==='r';
+  const canSwap=ORGA&&ed&&!p&&m.ref[0]==='r';
   const swA=`${m.ref[1]}:${m.ref[2]}:a`,swB=`${m.ref[1]}:${m.ref[2]}:b`;
   const canScore=admin&&ed&&known;
   return `${m.label?`<div class="ml">${esc(m.label)}</div>`:''}<div class="mrow"><span class="ter">T${m.terrain}</span>`
@@ -462,6 +463,8 @@ function rHome(){
   h+=`<section class="card"><h3>Planning</h3>${S.schedule.map(sl=>`<div class="pl ${sl.done?'done':sl===cur?'cur':''}"><span class="t">${hm(sl.start)}</span><span>${esc(sl.label)}</span><span class="chip ${sl.done?'done':sl===cur?'cur':''}">${sl.done?'terminé':sl===cur?'prochain':''}</span></div>`).join('')}</section>`;
   const svg=QR.svg(S.lan_url);
   h+=`<section class="card"><details><summary>📲 Partager ce site</summary><p class="mut" style="text-align:center">Scannez ce QR code ou saisissez l'adresse :</p><div class="qr">${svg}</div><div class="url">${esc(S.lan_url)}</div></details></section>`;
+  h+=ORGA?`<section class="card"><h3>Mode organisateur <span class="chip done">actif</span></h3><p class="mut">Vous pouvez corriger les rondes passées, échanger des équipes et ouvrir l'onglet Réglages.</p><button class="btn sec" data-act="lock">Quitter le mode organisateur</button></section>`
+    :`<section class="card"><details><summary>Accès organisateur</summary><input id="pin" type="password" inputmode="numeric" placeholder="Code organisateur" autocomplete="off" style="margin-top:8px"><button class="btn" data-act="unlock">Déverrouiller</button></details></section>`;
   return h;
 }
 
@@ -474,14 +477,14 @@ function genBtn(r,re){
 const roundLocked=r=>!ORGA&&((r<3&&S.rounds[r+1]&&S.rounds[r+1].exists)||(r===3&&S.finals.some(g=>g.matches.some(m=>m.sa!=null))));
 function rMatches(){
   let h='';
-  if(admin&&swapSel)h+='<p class="mut">⇄ Touchez une autre équipe (même ronde) pour échanger.</p>';
+  if(ORGA&&swapSel)h+='<p class="mut">⇄ Touchez une autre équipe (même ronde) pour échanger.</p>';
   for(let r=0;r<4;r++){
     const info=S.rounds[r],sls=S.schedule.filter(s=>s.round===r+1);
     h+=`<section class="card"><h3>Ronde ${r+1} <span class="chip ${info.complete?'done':''}">${info.exists?info.played+' / '+info.total:'—'}</span>${roundLocked(r)?' <span class="chip">verrouillée</span>':''}</h3>`;
     if(!info.exists){h+='<p class="mut">Pas encore générée.</p>';if(admin)h+=genBtn(r,false);}
     else{
       sls.forEach(sl=>{h+=`<div class="wave">${esc(sl.label.split('–')[1].trim())} · ${hm(sl.start)}</div>`+sl.matches.map(m=>mrow(m,!roundLocked(r))).join('');});
-      if(admin&&info.played===0&&!(S.rounds[r+1]&&S.rounds[r+1].exists))h+=genBtn(r,true);
+      if(ORGA&&info.played===0&&!(S.rounds[r+1]&&S.rounds[r+1].exists))h+=genBtn(r,true);
     }
     h+='</section>';
   }
@@ -511,7 +514,7 @@ function rFinals(){
 /* ----- Saisie / Admin ----- */
 function rAdmin(){
   const s=S.settings;
-  let h=`<section class="card"><h3>Saisie des scores</h3><p class="mut">Tout le monde peut saisir les scores. Allez dans <b>Matchs</b> (rondes suisses) ou <b>Finales</b>, puis touchez « Saisir » à côté d'un match. Cette page sert aux réglages : noms des équipes, horaires et remise à zéro.</p></section>`;
+  let h=`<section class="card"><h3>Réglages organisateur</h3><p class="mut">Noms des équipes, horaires, remise à zéro. Les joueurs saisissent les scores dans <b>Matchs</b> et <b>Finales</b> ; vous pouvez en plus corriger les rondes verrouillées et échanger des équipes.</p></section>`;
   h+=`<section class="card"><h3>Noms des équipes</h3>${S.teams.map((t,i)=>`<label style="margin-top:6px">Équipe ${i+1}</label><input type="text" class="tn" value="${esc(t)}" maxlength="30">`).join('')}<button class="btn" data-act="saveTeams">Enregistrer les noms</button></section>`;
   h+=`<section class="card"><h3>Horaires et durées</h3>
   <label>Titre</label><input type="text" id="s_title" value="${esc(s.title)}">
@@ -528,7 +531,7 @@ function render(){
   if(!S)return;
   drawHeader();drawTabs();
   const a=$('#app'),ae=document.activeElement;
-  if(tab==='admin'&&ae&&a.contains(ae)&&/INPUT|SELECT/.test(ae.tagName)){pending=true;return;}
+  if(ae&&a.contains(ae)&&/INPUT|SELECT/.test(ae.tagName)&&(tab==='admin'||ae.id==='pin')){pending=true;return;}
   pending=false;
   a.innerHTML=({home:rHome,matches:rMatches,rank:rRank,finals:rFinals,admin:rAdmin})[tab]();
 }
@@ -563,6 +566,13 @@ async function gen(r,re){
   await post('/api/gen_round',{r},'Ronde '+(r+1)+' générée');
 }
 const actions={
+  async unlock(){
+    const p=($('#pin').value||'').trim();if(!p){toast('Saisissez le code');return;}
+    try{const res=await rpc('check_pin',{p_pin:p});
+      if(res.ok){pin=p;localStorage.setItem('pin',p);ORGA=true;toast('Mode organisateur activé');render();}else toast(res.error||'Code incorrect');}
+    catch(e){toast('Connexion perdue');}
+  },
+  lock(){ORGA=false;pin='';try{localStorage.removeItem('pin');}catch(e){}if(tab==='admin')tab='home';render();},
   saveTeams(){post('/api/teams',{names:Array.from(document.querySelectorAll('.tn')).map(i=>i.value)},'Noms enregistrés');},
   saveSettings(){const g=id=>$('#'+id).value;post('/api/settings',{title:g('s_title'),accueil:g('s_accueil'),start:g('s_start'),slot:g('s_slot'),pause:g('s_pause'),classement:g('s_classement'),remise:g('s_remise')},'Horaires enregistrés');},
   resetScores(){if(confirm('Effacer TOUS les matchs et scores ?'))post('/api/reset',{what:'scores'},'Matchs effacés');},
@@ -582,7 +592,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{if(e.target.id==='myteam'){my=e.target.value;localStorage.setItem('team',my);render();}});
 
 (async function boot(){
-  /*boot-admin*/admin=true;try{localStorage.removeItem('pin');}catch(e){}
+  /*boot-admin*/admin=true;if(pin){try{const r=await rpc('check_pin',{p_pin:pin});ORGA=!!r.ok;if(!r.ok){pin='';localStorage.removeItem('pin');}}catch(e){}}if(!ORGA&&tab==='admin')tab='home';
   await poll();setInterval(poll,5000);
 })();
 </script>
