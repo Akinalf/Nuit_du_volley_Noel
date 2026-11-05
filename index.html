@@ -380,8 +380,10 @@ async function act(name,body){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');};
-const TABS=[['home','Accueil'],['matches','Matchs'],['rank','Classement'],['finals','Finales'],['admin','Réglages']];
-let S=null,tab=localStorage.getItem('tab')||'home',pin=localStorage.getItem('pin')||'',admin=false,my=localStorage.getItem('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
+/* L'onglet Réglages n'apparaît que sur les appareils des organisateurs (ouverts une fois avec le lien ?orga=reglages-noel). */
+const ORGA=(()=>{const L=location.search+location.hash;let f=/orga=reglages-noel/.test(L);try{if(f)localStorage.setItem('orga','1');else f=localStorage.getItem('orga')==='1';}catch(e){}return f;})();
+const TABS=[['home','Accueil'],['matches','Matchs'],['rank','Classement'],['finals','Finales']].concat(ORGA?[['admin','Réglages']]:[]);
+let S=null,tab=(!ORGA&&localStorage.getItem('tab')==='admin')?'home':(localStorage.getItem('tab')||'home'),pin=localStorage.getItem('pin')||'',admin=false,my=localStorage.getItem('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
 const nm=side=>side.t!=null?S.teams[side.t]:(side.label||'À définir');
 
 async function post(path,body,okMsg){
