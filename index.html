@@ -481,7 +481,7 @@ function rMatches(){
   for(let r=0;r<4;r++){
     const info=S.rounds[r],sls=S.schedule.filter(s=>s.round===r+1);
     h+=`<section class="card"><h3>Ronde ${r+1} <span class="chip ${info.complete?'done':''}">${info.exists?info.played+' / '+info.total:'—'}</span>${roundLocked(r)?' <span class="chip">verrouillée</span>':''}</h3>`;
-    if(!info.exists){h+='<p class="mut">Pas encore générée.</p>';if(admin)h+=genBtn(r,false);}
+    if(!info.exists){h+=`<p class="mut">Pas encore générée${ORGA?'.':' : à lancer par un organisateur.'}</p>`;if(ORGA)h+=genBtn(r,false);}
     else{
       sls.forEach(sl=>{h+=`<div class="wave">${esc(sl.label.split('–')[1].trim())} · ${hm(sl.start)}</div>`+sl.matches.map(m=>mrow(m,!roundLocked(r))).join('');});
       if(ORGA&&info.played===0&&!(S.rounds[r+1]&&S.rounds[r+1].exists))h+=genBtn(r,true);

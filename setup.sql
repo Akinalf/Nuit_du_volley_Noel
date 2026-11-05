@@ -1,9 +1,8 @@
 -- ============================================================================
 -- Tournoi de volley – base Supabase
 -- Lecture publique de l'état du tournoi. Écriture uniquement via save_state() :
---  * joueurs (sans code) : scores de la ronde en cours et des finales, génération
---    de la ronde suivante ; ils ne peuvent ni modifier les noms / horaires, ni
---    remettre à zéro, ni modifier une ronde déjà verrouillée ;
+--  * joueurs (sans code) : scores de la ronde en cours et des finales ; ils ne peuvent ni modifier les noms / horaires, ni
+--    générer une ronde, ni remettre à zéro, ni modifier une ronde déjà verrouillée ;
 --  * organisateurs (avec le code) : tous les droits.
 -- Chaque enregistrement garde l'état précédent dans tournoi_history (300 dernières
 -- versions). Remplacer __PIN__ par le code organisateur avant exécution.
@@ -112,7 +111,7 @@ begin
     return jsonb_build_object('ok', false, 'conflict', true);
   end if;
 
-  -- Droits des joueurs : noms et horaires intacts, aucune ronde existante supprimée,
+  -- Droits des joueurs : noms et horaires intacts, aucune ronde créée ni supprimée,
   -- rondes verrouillées (ronde suivante générée, ou finales commencées) intactes.
   if not is_admin and old ? 'teams' then
     if p_data -> 'teams' is distinct from old -> 'teams'
@@ -122,6 +121,9 @@ begin
     for i in 0..3 loop
       o := old -> 'rounds' -> i;
       n := p_data -> 'rounds' -> i;
+      if jsonb_typeof(o) is distinct from 'array' and jsonb_typeof(n) = 'array' then
+        return refus;  -- seuls les organisateurs génèrent une ronde
+      end if;
       if jsonb_typeof(o) = 'array' then
         if jsonb_typeof(n) is distinct from 'array' then return refus; end if;
         if i < 3 then
