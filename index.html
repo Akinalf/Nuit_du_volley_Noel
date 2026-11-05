@@ -559,6 +559,7 @@ function rAdmin(){
   <div><label>Créneau (min)</label><input type="number" id="s_slot" value="${s.slot}" inputmode="numeric"></div><div><label>Pause repas (min)</label><input type="number" id="s_pause" value="${s.pause}" inputmode="numeric"></div>
   <div><label>Classement (min)</label><input type="number" id="s_classement" value="${s.classement}" inputmode="numeric"></div><div><label>Remise des prix (min)</label><input type="number" id="s_remise" value="${s.remise}" inputmode="numeric"></div></div>
   <button class="btn" data-act="saveSettings">Enregistrer</button></section>`;
+  h+=`<section class="card"><h3>Sauvegarde</h3><p class="mut">Télécharge l'état complet du tournoi (noms, rondes, scores, finales) dans un fichier. Utile pour reprendre sur l'ordinateur de secours si le réseau ou le site tombe.</p><button class="btn sec" data-act="exportState">Télécharger une sauvegarde</button></section>`;
   h+=`<section class="card"><h3>Zone sensible</h3><button class="btn sec" data-act="resetScores">Effacer tous les matchs et scores</button><button class="btn red" data-act="resetAll">Tout réinitialiser (y compris les noms)</button></section>`;
   return h;
 }
@@ -603,6 +604,13 @@ async function gen(r,re){
   await post('/api/gen_round',{r},'Ronde '+(r+1)+' générée');
 }
 const actions={
+  async exportState(){
+    try{
+      const row=await fetchRow(),blob=new Blob([JSON.stringify({version:row.version,data:row.data},null,1)],{type:'application/json'}),a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);a.download='sauvegarde_tournoi_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
+      document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);toast('Sauvegarde téléchargée');
+    }catch(e){toast('Sauvegarde impossible');}
+  },
   async unlock(){
     const p=($('#pin').value||'').trim();if(!p){toast('Saisissez le code');return;}
     try{const res=await rpc('check_pin',{p_pin:p});
