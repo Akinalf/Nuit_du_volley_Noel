@@ -504,8 +504,8 @@ function myBlock(){
   if(nxt)ev.push({k:'mat',sl:nxt.sl,m:nxt.m});
   ev.sort((x,y)=>x.sl.start-y.sl.start);
   const who=e=>e.k==='arb'?`Vous arbitrez <b>${esc(nm(e.m.a))}</b> contre <b>${esc(nm(e.m.b))}</b>`:`Contre <b>${esc(nm(e.m.a.t===t?e.m.b:e.m.a))}</b>`;
-  const big=e=>`<div class="pn k-${e.k}"><div class="pnh">${e.k==='mat'?'PROCHAIN MATCH':'À FAIRE EN PREMIER'}</div><div class="pnr"><div class="pnt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="pnc"><span class="pnp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><div class="pnd">${hm(e.sl.start)}</div></div></div><div class="pnw">${who(e)}</div><div class="pns">${esc(e.sl.label)}</div></div>`;
-  const small=e=>`<div class="sn k-${e.k}"><div class="snt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="snc"><div class="snh">${e.k==='mat'?'ENSUITE · PROCHAIN MATCH':'ENSUITE · ARBITRAGE'}</div><div class="snd">${hm(e.sl.start)}</div><div>${who(e)}</div><div class="mut" style="font-size:12px;margin:2px 0 0">${esc(e.sl.label)}</div></div></div>`;
+  const big=e=>`<div class="pn k-${e.k}">${e.k==='mat'?'<div class="pnh">PROCHAIN MATCH</div>':''}<div class="pnr"><div class="pnt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="pnc"><span class="pnp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><div class="pnd">${hm(e.sl.start)}</div></div></div><div class="pnw">${who(e)}</div><div class="pns">${esc(e.sl.label)}</div></div>`;
+  const small=e=>`<div class="sn k-${e.k}"><div class="snt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="snc"><div class="snh">${e.k==='mat'?'PROCHAIN MATCH':'ARBITRAGE'}</div><div class="snd">${hm(e.sl.start)}</div><div>${who(e)}</div><div class="mut" style="font-size:12px;margin:2px 0 0">${esc(e.sl.label)}</div></div></div>`;
   let h='';
   if(ev.length){
     h+=big(ev[0]);
