@@ -33,6 +33,7 @@ select,input[type=text],input[type=time],input[type=number],input[type=password]
 .tm.w{font-weight:800}.tm[data-sw]{outline:1px dashed #b9c2d3;cursor:pointer}.tm.sel{background:#ffe08a}
 .sc{min-width:58px;text-align:center;font-weight:700;color:var(--navy);background:#eef1f7;border-radius:8px;padding:4px 8px}
 .sc.edit{background:var(--red);color:#fff;cursor:pointer}
+.arb{grid-column:1/-1;font-size:12px;color:var(--mut);padding-left:36px;margin-top:-2px}.arb b{color:var(--navy)}.arb.me{color:#b45309;font-weight:700}.arb.me b{color:#b45309}
 .ml{grid-column:1/-1;font-size:11px;color:var(--mut);margin-top:6px;font-weight:600}
 .pl{display:grid;grid-template-columns:52px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);align-items:center}
 .pl:first-child{border-top:0}.pl .t{font-weight:700;color:var(--navy)}.pl.done{opacity:.5}.pl.cur{background:#fff6e0;margin:0 -14px;padding:6px 14px}
@@ -213,7 +214,7 @@ function buildFinals(order){
     const fi=mk('f','Finale',win(df1,'Vainqueur D1'),win(df2,'Vainqueur D2'));
     if(fi.sa!=null){ranking[4*g]=win(fi,'').t;ranking[4*g+1]=lose(fi,'').t;}
     if(pf.sa!=null){ranking[4*g+2]=win(pf,'').t;ranking[4*g+3]=lose(pf,'').t;}
-    groups.push({g,title:titles[g],matches:[df1,df2,pf,fi],byKey:{df1,df2,pf,f:fi}});
+    groups.push({g,title:titles[g],matches:[df1,df2,pf,fi],byKey:{df1,df2,pf,f:fi},ids});
   }
   return{groups,ranking};
 }
@@ -244,11 +245,43 @@ function buildSchedule(groups){
   return out;
 }
 
+
+/* Arbitrage : chaque match est arbitré par une équipe qui ne joue pas pendant ce créneau (6 équipes au repos).
+   On équilibre le nombre d'arbitrages par équipe ; à égalité, en finale, on préfère une des 2 équipes de la poule
+   qui attendent à côté du terrain ; on évite aussi de redonner l'arbitrage à une équipe qui vient d'arbitrer.
+   Un créneau n'est attribué que quand tous ses matchs sont connus : le résultat est déterministe et ne change
+   plus une fois les équipes connues (il ne change que si les appariements changent). */
+function assignReferees(groups,sched){
+  const cnt=Array(N_TEAMS).fill(0),miss=Array(N_TEAMS).fill(0),last=Array(N_TEAMS).fill(-9);let si=0;
+  for(const sl of sched){
+    if(sl.kind==='info')continue;
+    si++;
+    if(!sl.matches.length||!sl.matches.every(m=>m.a.t!=null&&m.b.t!=null))continue;
+    const playing=new Set();sl.matches.forEach(m=>{playing.add(m.a.t);playing.add(m.b.t);});
+    const wait=[...Array(N_TEAMS).keys()].filter(t=>!playing.has(t)),used=new Set();
+    for(const m of sl.matches){
+      const home=sl.kind==='final'?new Set(groups[m.terrain-1].ids):null;
+      let best=null,bs=1e9;
+      for(const t of wait){
+        if(used.has(t))continue;
+        const sc=cnt[t]*100-miss[t]*6+(home&&!home.has(t)?40:0)+(last[t]===si-1?10:0)+((t+si*5)%N_TEAMS)/100;
+        if(sc<bs){bs=sc;best=t;}
+      }
+      if(best==null)continue;
+      used.add(best);cnt[best]++;last[best]=si;miss[best]=0;
+      m.arb=best;
+      if(sl.kind==='final')groups[m.terrain-1].byKey[m.ref[2]].arb=best;
+    }
+    for(const t of wait)if(!used.has(t))miss[t]++;
+  }
+  return cnt;
+}
+
 const pageUrl=()=>typeof location!=='undefined'?location.origin+location.pathname:'';
 function buildView(row){
   ST=normalize(clone(row.data));
-  const order=standings(),{groups,ranking}=buildFinals(order),sched=buildSchedule(groups);
-  return{version:row.version,settings:ST.settings,teams:ST.teams,
+  const order=standings(),{groups,ranking}=buildFinals(order),sched=buildSchedule(groups),arbCount=assignReferees(groups,sched);
+  return{arbCount,version:row.version,settings:ST.settings,teams:ST.teams,
     rounds:ST.rounds.map(r=>({exists:r!=null,played:r?r.filter(scored).length:0,total:PER_ROUND,complete:complete(r)})),
     standings:order,finals:groups.map(g=>({g:g.g,title:g.title,matches:g.matches})),
     final_ranking:ranking.map((t,i)=>({place:i+1,t})),schedule:sched,lan_url:pageUrl()};
@@ -417,7 +450,8 @@ function mrow(m,ed){
   return `${m.label?`<div class="ml">${esc(m.label)}</div>`:''}<div class="mrow"><span class="ter">T${m.terrain}</span>`
    +`<span class="tm ${p&&m.sa>m.sb?'w':''} ${swapSel===swA?'sel':''}" ${canSwap?`data-sw="${swA}"`:''}>${esc(nm(m.a))}</span>`
    +`<span class="sc ${canScore?'edit':''}" ${canScore?`data-ref="${ref}"`:''}>${p?`${m.sa} – ${m.sb}`:(canScore?'Saisir':'vs')}</span>`
-   +`<span class="tm r ${p&&m.sb>m.sa?'w':''} ${swapSel===swB?'sel':''}" ${canSwap?`data-sw="${swB}"`:''}>${esc(nm(m.b))}</span></div>`;
+   +`<span class="tm r ${p&&m.sb>m.sa?'w':''} ${swapSel===swB?'sel':''}" ${canSwap?`data-sw="${swB}"`:''}>${esc(nm(m.b))}</span>`
+   +(m.arb!=null?`<span class="arb ${String(m.arb)===my?'me':''}">Arbitre : <b>${esc(S.teams[m.arb])}</b></span>`:'')+`</div>`;
 }
 function curSlot(){return S.schedule.find(s=>s.kind!=='info'&&!s.done);}
 function slotBody(sl){
@@ -436,6 +470,9 @@ function myBlock(){
   else if(S.schedule.filter(s=>s.kind!=='info').every(s=>s.done))h+='<div class="big">Tournoi terminé 🎉</div>';
   else if(S.rounds.every(r=>r.complete))h+='<div>Votre prochain match dépend du classement : voir l\'onglet Finales.</div>';
   else h+='<div>Votre prochain match sera connu dès que la ronde suivante est générée.</div>';
+  let ar=null;
+  for(const sl of S.schedule){if(sl.kind==='info'||sl.done)continue;const m=sl.matches.find(m=>m.arb===t&&!(m.sa!=null&&m.sb!=null));if(m){ar={sl,m};break;}}
+  if(ar)h+=`<p style="margin-top:8px"><span class="chip cur">Arbitrage</span> ${hm(ar.sl.start)} · Terrain ${ar.m.terrain} — ${esc(nm(ar.m.a))} contre ${esc(nm(ar.m.b))}</p>`;
   if(st&&st.played>0)h+=`<p class="mut">Classement actuel : <b>${st.rank}${st.rank===1?'er':'e'}</b> — ${st.wins} victoire${st.wins>1?'s':''} sur ${st.played} match${st.played>1?'s':''}</p>`;
   return h;
 }
