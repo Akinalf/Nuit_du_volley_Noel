@@ -31,6 +31,9 @@ nav svg,.thm svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-wid
 .big{font-size:22px;font-weight:800;color:var(--ink);margin:2px 0}
 label{display:block;font-weight:600;margin-bottom:6px}
 select,input[type=text],input[type=time],input[type=number],input[type=password]{width:100%;padding:10px;border:1px solid var(--ibd);border-radius:8px;font:inherit;background:var(--card);color:var(--txt)}
+select{-webkit-appearance:none;appearance:none;padding-right:48px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6478' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center;background-size:16px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa7bf' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E")}}
+:root[data-theme=dark] select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa7bf' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E")}
 .wave{font-size:15px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px;margin:12px 0 4px}
 .tmb{font-size:20px;font-weight:800;line-height:1;padding:5px 12px;border-radius:10px;background:var(--chip);color:var(--ink);white-space:nowrap}.tmb.cur{background:var(--red);color:#fff}
 .mrow{display:grid;grid-template-columns:30px 1fr auto 1fr;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
