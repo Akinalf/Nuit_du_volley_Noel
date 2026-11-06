@@ -8,7 +8,7 @@
 <script>try{var _t=localStorage.getItem("theme");if(_t)document.documentElement.dataset.theme=_t;}catch(e){}</script>
 <title>Démo – Tournoi de volley</title>
 <style>
-:root{--navy:#14284b;--red:#c0392b;--green:#2e7d32;--bg:#f2f4f9;--mut:#6b7385;--line:#e2e6ee;--g0:#e3f2e1;--g1:#fff3cd;--g2:#fde3d6;--card:#fff;--txt:#1c2333;--ink:#14284b;--chip:#eef1f7;--ibd:#cdd3df;--hl:#fff6e0;--sel:#ffe08a;--tbd:rgba(0,0,0,.06);--shadow:rgba(20,40,75,.08);--doneb:#dff0df;--donec:#2e7d32;--me:#b45309;--toast:#222;color-scheme:light}
+:root{--navy:#14284b;--red:#c0392b;--green:#2e7d32;--bg:#f2f4f9;--mut:#5b6478;--line:#e2e6ee;--g0:#e3f2e1;--g1:#fff3cd;--g2:#fde3d6;--card:#fff;--txt:#1c2333;--ink:#14284b;--chip:#eef1f7;--ibd:#cdd3df;--hl:#fff6e0;--sel:#ffe08a;--tbd:rgba(0,0,0,.06);--shadow:rgba(20,40,75,.08);--doneb:#dff0df;--donec:#2e7d32;--me:#b45309;--toast:#222;color-scheme:light}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]){--navy:#254377;--bg:#0c1220;--card:#162033;--txt:#e5eaf3;--ink:#e5eaf3;--chip:#243049;--ibd:#3a4763;--mut:#9aa7bf;--line:#26324a;--g0:#173a25;--g1:#3a3315;--g2:#40291d;--hl:#3a3115;--sel:#6a5614;--tbd:rgba(255,255,255,.08);--shadow:rgba(0,0,0,.4);--doneb:#1c4a2a;--donec:#7be08f;--me:#fbbf24;--toast:#3b4a6b;color-scheme:dark}:root:not([data-theme=light]) .k-arb{--sn:#fdba74}:root:not([data-theme=light]) .k-mat{--sn:#86efac}}
 :root[data-theme=dark]{--navy:#254377;--bg:#0c1220;--card:#162033;--txt:#e5eaf3;--ink:#e5eaf3;--chip:#243049;--ibd:#3a4763;--mut:#9aa7bf;--line:#26324a;--g0:#173a25;--g1:#3a3315;--g2:#40291d;--hl:#3a3115;--sel:#6a5614;--tbd:rgba(255,255,255,.08);--shadow:rgba(0,0,0,.4);--doneb:#1c4a2a;--donec:#7be08f;--me:#fbbf24;--toast:#3b4a6b;color-scheme:dark}:root[data-theme=dark] .k-arb{--sn:#fdba74}:root[data-theme=dark] .k-mat{--sn:#86efac}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -45,7 +45,7 @@ select,input[type=text],input[type=time],input[type=number],input[type=password]
 .pnh{font-size:11px;font-weight:700;letter-spacing:.1em;color:#cbd5e1;margin-bottom:10px}
 .pnr{display:flex;align-items:center;gap:14px}
 .pnt{width:96px;height:96px;flex-shrink:0;background:#fff;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.pnt small{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mut)}.pnt b{font-size:58px;line-height:1;font-weight:800;color:var(--k)}
+.pnt small{font-size:11px;font-weight:800;letter-spacing:.1em;color:#475569}.pnt b{font-size:58px;line-height:1;font-weight:800;color:var(--k)}
 .pnc{display:flex;flex-direction:column;gap:8px;min-width:0;align-items:flex-start}
 .pnp{background:var(--kl);color:var(--kd);font-size:12px;font-weight:800;letter-spacing:.06em;padding:3px 12px;border-radius:20px}
 .pnd{font-size:52px;line-height:1;font-weight:800;letter-spacing:-.01em}.pnl{font-size:14px;font-weight:700;color:#e2e8f0}
@@ -61,7 +61,7 @@ select,input[type=text],input[type=time],input[type=number],input[type=password]
 .arb{grid-column:1/-1;font-size:12px;color:var(--mut);padding-left:36px;margin-top:-2px}.arb b{color:var(--ink)}.arb.me{color:var(--me);font-weight:700}.arb.me b{color:var(--me)}
 .ml{grid-column:1/-1;font-size:11px;color:var(--mut);margin-top:6px;font-weight:600}
 .pl{display:grid;grid-template-columns:52px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid var(--line);align-items:center}
-.pl:first-child{border-top:0}.pl .t{font-weight:800;font-size:18px;color:var(--ink)}.pl.done{opacity:.5}.pl.cur{background:var(--hl);margin:0 -14px;padding:6px 14px}
+.pl:first-child{border-top:0}.pl .t{font-weight:800;font-size:18px;color:var(--ink)}.pl.done{opacity:.7}.pl.cur{background:var(--hl);margin:0 -14px;padding:6px 14px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th{font-size:11px;text-transform:uppercase;color:var(--mut);text-align:center;padding:4px 2px}th:nth-child(2){text-align:left}
 td{padding:7px 2px;text-align:center;border-top:1px solid var(--tbd)}td:nth-child(2){text-align:left;font-weight:600}
