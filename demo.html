@@ -185,7 +185,7 @@ const pk=(a,b)=>a<b?a+'-'+b:b+'-'+a;
 function standings(){
   const st=Array.from({length:N_TEAMS},(_,i)=>({team:i,played:0,wins:0,pf:0,pa:0,opp:[]}));
   for(const rnd of ST.rounds){
-    if(!rnd)continue;
+    if(!rnd||!complete(rnd))continue; /* le classement ne bouge qu'une fois la ronde entièrement saisie */
     for(const m of rnd){
       if(!scored(m))continue;
       const a=st[m.a],b=st[m.b];
@@ -553,7 +553,8 @@ function rMatches(){
 /* ----- Classement ----- */
 function rRank(){
   const any=S.standings.some(s=>s.played>0);
-  let h=`<section class="card"><h3>Classement des rondes suisses</h3><p class="mut">Départage : victoires, puis Buchholz (victoires des adversaires rencontrés), puis différence de points.</p><table><tr><th>#</th><th>Équipe</th><th>V</th><th>J</th><th>Buch.</th><th>Diff.</th></tr>`;
+  const cr=S.rounds.findIndex(r=>r.exists&&!r.complete),crt=cr>=0?S.rounds[cr]:null;
+  let h=`<section class="card"><h3>Classement des rondes suisses</h3>${crt?`<p class="mut" style="background:#fff3cd;padding:6px 10px;border-radius:8px">Ronde ${cr+1} en cours (${crt.played}/${crt.total} matchs saisis) : le classement sera mis à jour quand elle sera terminée.</p>`:'<p class="mut">Le classement est mis à jour à la fin de chaque ronde.</p>'}<p class="mut">Départage : victoires, puis Buchholz (victoires des adversaires rencontrés), puis différence de points.</p><table><tr><th>#</th><th>Équipe</th><th>V</th><th>J</th><th>Buch.</th><th>Diff.</th></tr>`;
   h+=S.standings.map(s=>`<tr class="g${s.group}"><td><b>${s.rank}</b></td><td>${esc(S.teams[s.team])}${s.tie?' ⚠':''}</td><td><b>${s.wins}</b></td><td>${s.played}</td><td>${s.buch}</td><td>${s.diff>0?'+':''}${s.diff}</td></tr>`).join('');
   h+='</table>';
   if(any&&S.standings.some(s=>s.tie))h+='<p class="mut">⚠ Égalité parfaite : à départager (confrontation directe ou tirage) avant les finales.</p>';
