@@ -34,6 +34,24 @@ select,input[type=text],input[type=time],input[type=number],input[type=password]
 select{-webkit-appearance:none;appearance:none;padding-right:48px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6478' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center;background-size:16px}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa7bf' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E")}}
 :root[data-theme=dark] select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa7bf' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E")}
+button,[role=button],select,summary,label[for],[data-tab],[data-act],[data-ref],[data-sw],[data-gen],[data-live],[data-lv],.sc.edit{cursor:pointer}
+button:disabled,.btn:disabled{cursor:not-allowed}
+.lvable{cursor:pointer}.lvable .sc.edit{background:var(--green);color:#fff}
+.hint{font-size:12px;font-weight:700;margin-top:8px;opacity:.9}.sn .hint{color:var(--sn);opacity:1}
+html.lv,html.lv body{overflow:hidden}
+.live{position:fixed;inset:0;z-index:30;background:#0b1220;color:#fff;display:flex;flex-direction:column;-webkit-user-select:none;user-select:none}
+.lvt{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));font-size:14px;font-weight:700}
+.lvx{border:1px solid rgba(255,255,255,.45);background:none;color:#fff;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700;min-height:40px}
+.lvb{flex:1;display:flex;gap:6px;padding:0 6px;min-height:0}
+.lvc{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.lvp{flex:1;border:0;border-radius:18px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font:inherit;padding:8px;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lvc.a .lvp{background:#1d4ed8}.lvc.b .lvp{background:#b91c1c}.lvp:active{filter:brightness(1.3)}
+.lvnm{font-size:clamp(16px,5vw,26px);font-weight:800;text-align:center;overflow-wrap:anywhere;line-height:1.15}
+.lvn{font-size:min(32vw,34vh);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.lvh2{font-size:12px;opacity:.85}
+.lvm{border:2px solid rgba(255,255,255,.4);background:none;color:#fff;border-radius:12px;font:inherit;font-size:22px;font-weight:800;min-height:52px;touch-action:manipulation}
+.lvf{display:flex;flex-wrap:wrap;gap:8px;padding:8px 6px calc(10px + env(safe-area-inset-bottom))}.lvf .btn{margin-top:0;flex:1}
+.lvf .btn.sec{background:rgba(255,255,255,.14);color:#fff}.lvf .lvok{flex:1 1 100%;order:-1;background:var(--green);font-size:18px;padding:14px}
 .wave{font-size:15px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px;margin:12px 0 4px}
 .tmb{font-size:20px;font-weight:800;line-height:1;padding:5px 12px;border-radius:10px;background:var(--chip);color:var(--ink);white-space:nowrap}.tmb.cur{background:var(--red);color:#fff}
 .mrow{display:grid;grid-template-columns:30px 1fr auto 1fr;gap:6px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
@@ -503,9 +521,10 @@ function mrow(m,ed){
   const canSwap=ORGA&&ed&&!p&&m.ref[0]==='r';
   const swA=`${m.ref[1]}:${m.ref[2]}:a`,swB=`${m.ref[1]}:${m.ref[2]}:b`;
   const canScore=admin&&ed&&known;
-  return `${m.label?`<div class="ml">${esc(m.label)}</div>`:''}<div class="mrow"><span class="ter">T${m.terrain}</span>`
+  const mine=admin&&known&&my!==''&&m.arb!=null&&String(m.arb)===my;
+  return `${m.label?`<div class="ml">${esc(m.label)}</div>`:''}<div class="mrow${mine?' lvable':''}" ${mine?`data-live="${ref}" role="button" tabindex="0" aria-label="Marquer le score en grand écran"`:''}><span class="ter">T${m.terrain}</span>`
    +`<span class="tm ${p&&m.sa>m.sb?'w':''} ${swapSel===swA?'sel':''}" ${canSwap?`data-sw="${swA}"`:''}>${esc(nm(m.a))}</span>`
-   +`<span class="sc ${canScore?'edit':''}" ${canScore?`data-ref="${ref}"`:''}>${p?`${m.sa} – ${m.sb}`:(canScore?'Saisir':'vs')}</span>`
+   +`<span class="sc ${canScore?'edit':''}" ${mine?`data-live="${ref}"`:(canScore?`data-ref="${ref}"`:'')}>${p?`${m.sa} – ${m.sb}`:(mine?'Marquer':(canScore?'Saisir':'vs'))}</span>`
    +`<span class="tm r ${p&&m.sb>m.sa?'w':''} ${swapSel===swB?'sel':''}" ${canSwap?`data-sw="${swB}"`:''}>${esc(nm(m.b))}</span>`
    +(m.arb!=null?`<span class="arb ${String(m.arb)===my?'me':''}">Arbitre : <b>${esc(S.teams[m.arb])}</b></span>`:'')+`</div>`;
 }
@@ -529,8 +548,10 @@ function myBlock(){
   if(nxt)ev.push({k:'mat',sl:nxt.sl,m:nxt.m});
   ev.sort((x,y)=>x.sl.start-y.sl.start);
   const who=e=>e.k==='arb'?`Vous arbitrez <b>${esc(nm(e.m.a))}</b> contre <b>${esc(nm(e.m.b))}</b>`:`Contre <b>${esc(nm(e.m.a.t===t?e.m.b:e.m.a))}</b>`;
-  const big=e=>`<div class="pn k-${e.k}">${e.k==='mat'?'<div class="pnh">PROCHAIN MATCH</div>':''}<div class="pnr"><div class="pnt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="pnc"><span class="pnp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><div class="pnd">${hm(e.sl.start)}</div><div class="pnl">${esc(e.sl.label)}</div></div></div><div class="pnw">${who(e)}</div></div>`;
-  const small=e=>`<div class="sn k-${e.k}"><div class="snt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="snc"><div class="snh">${e.k==='mat'?'PROCHAIN MATCH':'ARBITRAGE'}</div><div class="snd">${hm(e.sl.start)}<span>${esc(e.sl.label)}</span></div><div>${who(e)}</div></div></div>`;
+  const lvA=e=>e.k==='arb'?` data-live="${e.m.ref.join(':')}" role="button" tabindex="0"`:'';
+  const hint=e=>e.k==='arb'?'<div class="hint">Touchez pour marquer le score en grand écran</div>':'';
+  const big=e=>`<div class="pn k-${e.k}"${lvA(e)}>${e.k==='mat'?'<div class="pnh">PROCHAIN MATCH</div>':''}<div class="pnr"><div class="pnt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="pnc"><span class="pnp">${e.k==='arb'?'ARBITRAGE':'MATCH'}</span><div class="pnd">${hm(e.sl.start)}</div><div class="pnl">${esc(e.sl.label)}</div></div></div><div class="pnw">${who(e)}</div>${hint(e)}</div>`;
+  const small=e=>`<div class="sn k-${e.k}"${lvA(e)}><div class="snt"><small>TERRAIN</small><b>${e.m.terrain}</b></div><div class="snc"><div class="snh">${e.k==='mat'?'PROCHAIN MATCH':'ARBITRAGE'}</div><div class="snd">${hm(e.sl.start)}<span>${esc(e.sl.label)}</span></div><div>${who(e)}</div>${hint(e)}</div></div>`;
   let h='';
   if(ev.length){
     h+=big(ev[0]);
@@ -643,13 +664,32 @@ function openScore(ref){
   <div class="btns"><button class="btn" data-act="saveScore" data-ref="${ref}">Enregistrer</button><button class="btn sec" data-act="clearScore" data-ref="${ref}">Effacer</button><button class="btn ghost" data-act="closeModal">Annuler</button></div></div></div>`;
   setTimeout(()=>{const e=$('#sa'),m=$('#modal');if(e&&m&&!m.contains(document.activeElement))e.focus();},50);
 }
-function closeModal(){$('#modal').innerHTML='';}
+function closeModal(){$('#modal').innerHTML='';LV=null;document.documentElement.classList.remove('lv');}
+let LV=null;
+function openLive(ref){
+  const f=findMatch(ref);if(!f)return;const{m,sl}=f;
+  let a=m.sa==null?0:+m.sa,b=m.sb==null?0:+m.sb;
+  try{const o=JSON.parse(localStorage.getItem('solo_live')||'null');if(o&&o.ref===ref&&Date.now()-o.t<1.08e7){a=o.a;b=o.b;}}catch(e){}
+  LV={ref,a,b};document.documentElement.classList.add('lv');
+  const side=(k,t,v)=>`<div class="lvc ${k}"><button class="lvp" data-lv="${k}+" aria-label="Un point pour ${esc(nm(t))}"><span class="lvnm">${esc(nm(t))}</span><span class="lvn" id="lv${k}">${v}</span><span class="lvh2">Touchez pour +1</span></button><button class="lvm" data-lv="${k}-" aria-label="Retirer un point à ${esc(nm(t))}">−1</button></div>`;
+  $('#modal').innerHTML=`<div class="live" role="dialog" aria-label="Score en grand écran"><div class="lvt"><span>Terrain ${m.terrain} · ${esc(sl.label)}</span><button class="lvx" data-act="closeModal">Fermer</button></div><div class="lvb">${side('a',m.a,a)}${side('b',m.b,b)}</div><div class="lvf"><button class="btn sec" data-lv="z">0 – 0</button><button class="btn sec" data-lv="man">Saisie manuelle</button><button class="btn lvok" data-lv="ok">Valider le score</button></div></div>`;
+}
+function lvDraw(){const a=$('#lva'),b=$('#lvb');if(a)a.textContent=LV.a;if(b)b.textContent=LV.b;try{localStorage.setItem('solo_live',JSON.stringify({ref:LV.ref,a:LV.a,b:LV.b,t:Date.now()}));}catch(e){}}
+function lvAction(k){
+  if(!LV)return;
+  if(k==='ok'){if(LV.a===0&&LV.b===0&&!confirm('Enregistrer 0 – 0 ?'))return;sendScore(LV.ref,LV.a,LV.b,false);return;}
+  if(k==='man'){const r=LV.ref;closeModal();openScore(r);return;}
+  if(k==='z'){LV.a=0;LV.b=0;lvDraw();return;}
+  const s=k[0],d=k[1]==='+'?1:-1;LV[s]=Math.max(0,Math.min(99,LV[s]+d));
+  try{navigator.vibrate&&navigator.vibrate(d>0?12:8);}catch(e){}
+  lvDraw();
+}
 async function sendScore(ref,sa,sb,force){
   const p=ref.split(':'),body=p[0]==='r'?{kind:'round',r:+p[1],m:+p[2],sa,sb,force,orga:ORGA}:{kind:'final',g:+p[1],k:p[2],sa,sb,force};
   const res=await post('/api/score',body);
   if(!res)return;
   if(res.error){if(res.soft&&confirm(res.error+'\n\nEnregistrer quand même ?'))return sendScore(ref,sa,sb,true);return;}
-  closeModal();toast(sa==null?'Score effacé':'Score enregistré');
+  closeModal();try{localStorage.removeItem('solo_live');}catch(e){}toast(sa==null?'Score effacé':'Score enregistré');
 }
 async function doSwap(id){
   if(!swapSel){swapSel=id;render();return;}
@@ -689,11 +729,14 @@ const actions={
 document.addEventListener('click',e=>{
   const t=e.target;
   const tb=t.closest('[data-tab]');if(tb){tab=tb.dataset.tab;localStorage.setItem('solo_tab',tab);swapSel=null;pending=false;render();window.scrollTo(0,0);return;}
+  const lv=t.closest('[data-lv]');if(lv){lvAction(lv.dataset.lv);return;}
+  const lm=t.closest('[data-live]');if(lm){openLive(lm.dataset.live);return;}
   const sc=t.closest('.sc[data-ref]');if(sc){openScore(sc.dataset.ref);return;}
   const sw=t.closest('[data-sw]');if(sw){doSwap(sw.dataset.sw);return;}
   const g=t.closest('[data-gen]');if(g){gen(+g.dataset.gen,g.dataset.re==='1');return;}
   const b=t.closest('[data-act]');if(b&&actions[b.dataset.act])actions[b.dataset.act](b);
 });
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-live]')){e.preventDefault();openLive(e.target.dataset.live);}});
 document.addEventListener('change',e=>{if(e.target.id==='myteam'){my=e.target.value;localStorage.setItem('solo_team',my);render();}});
 
 document.addEventListener('change',async e=>{
