@@ -1,0 +1,4 @@
+__pycache__/
+# Ancienne version tout-en-Python et ses données locales (contiennent un code organisateur)
+tournoi_data.json
+tournoi_volley.py
