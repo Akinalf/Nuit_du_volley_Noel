@@ -12,17 +12,12 @@ Le code organisateur n'est stocké que dans la base Supabase (table `tournoi_sec
 
 Il n'y a qu'un seul fichier : `index.html` contient les deux modes. Servi par le site, il lit et écrit dans la base. Enregistré sur un ordinateur et ouvert en double-clic, il passe en **mode hors ligne** : une seule personne saisit tous les résultats, et les données restent dans le navigateur de cet ordinateur (ouvrir toujours avec le même navigateur).
 
-Avant le tournoi, sur l'ordinateur de la table de marque :
+Un seul bouton, un seul fichier : Réglages > « Télécharger la version hors ligne » enregistre la page **avec le tournoi dedans** (`tournoi_hors_ligne_<date>_<heure>.html`).
 
-1. Ouvrir le site en mode organisateur.
-2. Réglages > « Télécharger la version hors ligne ».
+Pendant le tournoi, garder le site ouvert en mode organisateur sur l'ordinateur de la table de marque et télécharger ce fichier après chaque ronde. Si le serveur ne répond plus, le bouton fonctionne quand même, avec le dernier état que la page a reçu.
 
-Pendant le tournoi, garder le site ouvert sur cet ordinateur et faire Réglages > « Télécharger une sauvegarde » après chaque ronde. Si le serveur ne répond plus, ce bouton enregistre le dernier état que la page a reçu.
+Si la connexion tombe : ouvrir en double-clic le dernier fichier téléchargé. Le tournoi reprend là où il en était, sur cet ordinateur ou sur un autre. Si le navigateur contient déjà un autre tournoi, la page demande lequel garder.
 
-Si la connexion tombe :
+En mode hors ligne, le même bouton s'appelle « Télécharger une sauvegarde » et produit le même genre de fichier.
 
-1. Ouvrir en double-clic le fichier `tournoi_hors_ligne.html` téléchargé.
-2. Réglages > « Reprendre une sauvegarde », choisir le dernier fichier de sauvegarde.
-3. Continuer le tournoi sur cet ordinateur.
-
-Si la connexion revient : télécharger une sauvegarde depuis la version hors ligne, puis la reprendre sur le site (Réglages > « Reprendre une sauvegarde », mode organisateur).
+Si la connexion revient : télécharger une sauvegarde depuis la version hors ligne, puis sur le site, en mode organisateur, Réglages > « Reprendre un fichier ».

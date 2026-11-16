@@ -1,15 +1,16 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#070912">
-<link rel="icon" href="data:,">
-<script>try{var _t=localStorage.getItem("theme");if(!_t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)_t="dark";document.documentElement.dataset.theme=_t||"light";}catch(e){document.documentElement.dataset.theme="light";}</script>
+<!-- Les éléments marqués data-src composent la page d'origine : ce sont eux, et eux seuls, qui sont recopiés dans le fichier « version hors ligne ». -->
+<meta charset="utf-8" data-src>
+<meta name="viewport" content="width=device-width,initial-scale=1" data-src>
+<meta name="theme-color" content="#070912" data-src>
+<link rel="icon" href="data:," data-src>
+<script data-src>try{var _t=localStorage.getItem("theme");if(!_t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)_t="dark";document.documentElement.dataset.theme=_t||"light";}catch(e){document.documentElement.dataset.theme="light";}</script>
 <!-- Polices : pas de requête réseau quand la page est ouverte comme fichier local (mode hors ligne) -->
-<script>if(location.protocol!=="file:"){var _l=document.createElement("link");_l.rel="stylesheet";_l.href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Chakra+Petch:wght@600;700&display=swap";document.head.appendChild(_l);}</script>
-<title>Tournoi de volley</title>
-<style>
+<script data-src>if(location.protocol!=="file:"){var _l=document.createElement("link");_l.rel="stylesheet";_l.href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Chakra+Petch:wght@600;700&display=swap";document.head.appendChild(_l);}</script>
+<title data-src>Tournoi de volley</title>
+<style data-src>
 :root{--red:#d90f27;--green:#15803d;--bg:#f3f5fb;--mut:#54608a;--line:#d9deef;--g0:#dcf3e6;--g1:#fff3cd;--g2:#fde3d6;--card:#fff;--txt:#141a33;--ink:#0b1030;--chip:#eceff9;--ibd:#b8c0dc;--hl:#fff5c2;--sel:#ffe94d;--tbd:rgba(0,0,0,.06);--shadow:rgba(20,30,80,.10);--doneb:#dcf3e6;--donec:#15803d;--brand:#0899b8;--brandfg:#04121c;--arb:#d92bb4;--arbfg:#1a0420;--yel:#f5c400;--yelfg:#1b1700;--nt:#0e7490;--arbx:#b0158f;--yelx:#8a5200;--me:#8a5200;--toast:#141a33;--neon:#0e7490;--stok:#15803d;--stko:#b91c1c;color-scheme:light}
 :root[data-theme=dark]{--bg:#070912;--card:#0d1226;--txt:#eef2ff;--ink:#ffffff;--chip:#141a33;--ibd:#3a4678;--mut:#a3aed6;--line:#26305a;--g0:#123a2c;--g1:#3a3515;--g2:#40291d;--hl:rgba(255,233,77,.10);--sel:#5c4f10;--tbd:rgba(255,255,255,.08);--shadow:rgba(0,0,0,.5);--doneb:#123a2c;--donec:#7be0a0;--brand:#2be4ff;--arb:#ff4fd8;--yel:#ffe94d;--nt:#2be4ff;--arbx:#ff4fd8;--yelx:#ffe94d;--me:#ffe94d;--toast:#26305a;--neon:#2be4ff;--stok:#9be29b;--stko:#ffb3a8;color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -150,12 +151,25 @@ header h1 span{display:block;color:var(--nt)}
 </style>
 </head>
 <body>
-<header id="hdr"></header>
-<main id="app"><p class="mut">Chargement…</p></main>
-<nav id="tabs" aria-label="Navigation principale"></nav>
-<div id="modal"></div>
-<div id="toast" role="status" aria-live="polite"></div>
-<script>
+<header id="hdr" data-src></header>
+<main id="app" data-src><p class="mut">Chargement…</p></main>
+<nav id="tabs" aria-label="Navigation principale" data-src></nav>
+<div id="modal" data-src></div>
+<div id="toast" role="status" aria-live="polite" data-src></div>
+<!-- Vide sur le site. Dans un fichier « version hors ligne », contient le tournoi au moment du téléchargement. -->
+<script id="etat" type="application/json" data-src></script>
+<script data-src>
+/* ---------- Copie de la page, pour le fichier « version hors ligne » ---------- */
+/* Prise ici, avant tout affichage : la page d'origine, sans rien de ce que le navigateur ou ses extensions ont pu ajouter. */
+const PAGE=(()=>{const pick=p=>Array.from(p.children).filter(e=>e.hasAttribute('data-src')).map(e=>e.outerHTML).join('\n');return{head:pick(document.head),body:pick(document.body)};})();
+/* Tournoi embarqué dans ce fichier, s'il y en a un : {id, saved_at, version, data}. */
+const EMB=(()=>{try{const t=document.getElementById('etat').textContent.trim();if(!t)return null;const o=JSON.parse(t);return o&&o.id&&o.data?o:null;}catch(e){return null;}})();
+/* La page complète avec un tournoi dedans. */
+function pageWith(emb){
+  const json=JSON.stringify(emb).replace(/</g,'\\u003c');
+  const body=PAGE.body.replace(/(<script id="etat"[^>]*>)[\s\S]*?(<\/script>)/,(m,a,b)=>a+json+b);
+  return '<!doctype html>\n<html lang="fr">\n<head>\n'+PAGE.head+'\n</head>\n<body>\n'+body+'\n</body>\n</html>\n';
+}
 /* ---------- Générateur de QR code (mode octets, correction L, versions 1 à 6) ---------- */
 const QR=(function(){
   const ECC=[-1,7,10,15,20,26,18], NB=[-1,1,1,1,1,1,2];
@@ -506,6 +520,7 @@ const NET={
 };
 
 /* ----- Stockage hors ligne (navigateur de cet ordinateur) ----- */
+const okShape=d=>!!d&&Array.isArray(d.teams)&&d.teams.length===N_TEAMS&&Array.isArray(d.rounds)&&d.rounds.length===N_ROUNDS;
 const SKEY='solo_etat',HKEY='solo_hist';
 let MEM={version:0,data:defaultState()};
 function soloRead(){try{const s=localStorage.getItem(SKEY);if(s){const o=JSON.parse(s);if(o&&o.data&&typeof o.version==='number')return o;}}catch(e){}return MEM;}
@@ -736,9 +751,10 @@ function rAdmin(){
   <div><label>Créneau (min)</label><input type="number" id="s_slot" value="${s.slot}" inputmode="numeric"></div><div><label>Pause repas (min)</label><input type="number" id="s_pause" value="${s.pause}" inputmode="numeric"></div>
   <div><label>Classement (min)</label><input type="number" id="s_classement" value="${s.classement}" inputmode="numeric"></div><div><label>Remise des prix (min)</label><input type="number" id="s_remise" value="${s.remise}" inputmode="numeric"></div></div>
   <button class="btn" data-act="saveSettings">Enregistrer</button></section>`;
-  h+=`<section class="card"><h3>Sauvegarde</h3><p class="mut">Télécharge l'état complet du tournoi (noms, rondes, scores, finales) dans un fichier. ${LOCAL?'À faire après chaque ronde : c\'est votre seule copie en dehors de ce navigateur.':'À faire après chaque ronde : si la connexion tombe, ce fichier permet de continuer en mode hors ligne.'}</p><button class="btn sec" data-act="exportState">Télécharger une sauvegarde</button></section>`;
-  h+=`<section class="card"><h3>Reprendre une sauvegarde</h3><p class="mut">Remplace le tournoi actuel par le contenu d'un fichier de sauvegarde (téléchargé depuis le site en ligne ou depuis la version hors ligne).</p><input type="file" id="imp" accept=".json,application/json"></section>`;
-  if(!LOCAL)h+=`<section class="card"><h3>Version hors ligne</h3><p class="mut">Enregistre cette page sur l'ordinateur. Ouverte en double-clic, sans internet, elle fait tourner le tournoi sur ce seul ordinateur : reprenez-y votre dernière sauvegarde, puis saisissez tous les scores vous-même. À télécharger avant le tournoi.</p><button class="btn sec" data-act="dlOffline">Télécharger la version hors ligne</button></section>`;
+  h+=LOCAL
+    ?`<section class="card"><h3>Sauvegarde</h3><p class="mut">Télécharge un fichier qui contient cette page <b>et</b> tout le tournoi (noms, rondes, scores, finales). À refaire après chaque ronde : c'est votre seule copie en dehors de ce navigateur. Ce fichier s'ouvre en double-clic sur n'importe quel ordinateur.</p><button class="btn sec" data-act="exportState">Télécharger une sauvegarde</button></section>`
+    :`<section class="card"><h3>Version hors ligne</h3><p class="mut">Télécharge un seul fichier : cette page avec tout le tournoi dedans (noms, rondes, scores, finales). À refaire après chaque ronde. Si la connexion tombe, ouvrez ce fichier en double-clic sur l'ordinateur : le tournoi reprend là où il en était, et vous saisissez tous les scores vous-même.</p><button class="btn sec" data-act="exportState">Télécharger la version hors ligne</button></section>`;
+  h+=`<section class="card"><h3>Reprendre un fichier</h3><p class="mut">Remplace le tournoi actuel par celui d'un fichier téléchargé avec le bouton ci-dessus${LOCAL?'':' (par exemple pour revenir sur le site après une coupure)'}.</p><input type="file" id="imp" accept=".html,.json,text/html,application/json"></section>`;
   h+=`<section class="card"><h3>Zone sensible</h3><button class="btn sec" data-act="resetScores">Effacer tous les matchs et scores</button><button class="btn red" data-act="resetAll">Tout réinitialiser (y compris les noms)</button></section>`;
   return h;
 }
@@ -807,16 +823,13 @@ const actions={
     let row,old=false;
     try{row=await fetchRow();}catch(e){row=LAST;old=true;}
     if(!row){toast('Sauvegarde impossible');return;}
+    /* Un seul fichier : la page et le tournoi. Il s'ouvre en double-clic et reprend là où on en était. */
     try{
-      download(new Blob([JSON.stringify({version:row.version,data:row.data},null,1)],{type:'application/json'}),'sauvegarde_tournoi_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json');
-      toast(old?'Serveur injoignable : sauvegarde du dernier état reçu':'Sauvegarde téléchargée');
+      const now=new Date(),p=n=>String(n).padStart(2,'0'),stamp=now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate())+'_'+p(now.getHours())+'h'+p(now.getMinutes());
+      const emb={id:stamp+'-'+Math.random().toString(36).slice(2,8),saved_at:now.toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}),version:row.version,data:row.data};
+      download(new Blob([pageWith(emb)],{type:'text/html'}),'tournoi_hors_ligne_'+stamp+'.html');
+      toast(old?'Serveur injoignable : fichier fait avec le dernier état reçu':(LOCAL?'Sauvegarde téléchargée':'Version hors ligne téléchargée'));
     }catch(e){toast('Sauvegarde impossible');}
-  },
-  async dlOffline(){
-    try{
-      const r=await fetch(location.href.split(/[?#]/)[0],{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
-      download(new Blob([await r.text()],{type:'text/html'}),'tournoi_hors_ligne.html');toast('Version hors ligne téléchargée');
-    }catch(e){toast('Téléchargement impossible');}
   },
   async unlock(){
     const p=($('#pin').value||'').trim();if(!p){toast('Saisissez le code');return;}
@@ -852,20 +865,34 @@ document.addEventListener('change',async e=>{
   if(e.target.id!=='imp'||!e.target.files||!e.target.files[0])return;
   let d;
   try{
-    const o=JSON.parse(await e.target.files[0].text());d=(o&&o.data&&!o.teams)?o.data:o;
-    if(!d||!Array.isArray(d.teams)||d.teams.length!==N_TEAMS||!Array.isArray(d.rounds)||d.rounds.length!==N_ROUNDS)throw new Error('format');
-  }catch(err){toast('Fichier de sauvegarde invalide');e.target.value='';return;}
-  if(!confirm('Remplacer le tournoi actuel par cette sauvegarde ?')){e.target.value='';return;}
+    /* Fichier « version hors ligne » (la page avec le tournoi dedans) ou ancienne sauvegarde .json. */
+    let txt=await e.target.files[0].text();
+    const m=txt.match(/<script id="etat"[^>]*>([\s\S]*?)<\/script>/);if(m)txt=m[1];
+    const o=JSON.parse(txt);d=(o&&o.data&&!o.teams)?o.data:o;
+    if(!okShape(d))throw new Error('format');
+  }catch(err){toast('Fichier invalide ou sans tournoi dedans');e.target.value='';return;}
+  if(!confirm('Remplacer le tournoi actuel par celui de ce fichier ?')){e.target.value='';return;}
   try{
     const row=await fetchRow(),res=await rpc('save_state',{p_expected:row.version,p_data:d,p_pin:pin||null});
-    if(res&&res.ok){const r2=await fetchRow();LAST=r2;S=buildView(r2);lastVer=r2.version;render();toast('Sauvegarde reprise');}
+    if(res&&res.ok){const r2=await fetchRow();LAST=r2;S=buildView(r2);lastVer=r2.version;render();toast('Tournoi repris');}
     else toast(res&&res.conflict?'Le tournoi vient de changer, réessayez.':(res&&res.error)||'Reprise impossible');
   }catch(err){toast('Connexion perdue');}
 });
 
 (async function boot(){
   admin=true;
-  if(LOCAL){ORGA=true;pin='';try{localStorage.setItem('solo_test','1');localStorage.removeItem('solo_test');}catch(e){STORE_OK=false;}}
+  if(LOCAL){
+    ORGA=true;pin='';try{localStorage.setItem('solo_test','1');localStorage.removeItem('solo_test');}catch(e){STORE_OK=false;}
+    /* Ce fichier embarque un tournoi : on le reprend à la première ouverture. Si ce navigateur a déjà un autre tournoi en cours, on demande lequel garder. */
+    if(EMB&&okShape(EMB.data)&&ls.get('src')!==EMB.id){
+      const cur=soloRead();
+      if(cur.version===0||confirm('Ce fichier contient un tournoi enregistré le '+EMB.saved_at+'.\nCe navigateur a déjà un tournoi en cours.\n\nOK : reprendre le tournoi du fichier.\nAnnuler : garder celui du navigateur.')){
+        if(cur.version>0)soloHist({version:cur.version,data:cur.data});
+        soloWrite({version:cur.version+1,data:clone(EMB.data)});
+      }
+      ls.set('src',EMB.id);
+    }
+  }
   else{if(pin){try{const r=await rpc('check_pin',{p_pin:pin});ORGA=!!r.ok;if(!r.ok){pin='';ls.del('pin');}}catch(e){}}if(!ORGA&&tab==='admin')tab='home';}
   await poll();setInterval(poll,5000);
 })();
