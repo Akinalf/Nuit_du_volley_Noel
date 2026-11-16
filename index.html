@@ -6,7 +6,8 @@
 <meta name="theme-color" content="#070912">
 <link rel="icon" href="data:,">
 <script>try{var _t=localStorage.getItem("theme");if(!_t&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)_t="dark";document.documentElement.dataset.theme=_t||"light";}catch(e){document.documentElement.dataset.theme="light";}</script>
-<!--FONTS--><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Chakra+Petch:wght@600;700&display=swap"><!--/FONTS-->
+<!-- Polices : pas de requête réseau quand la page est ouverte comme fichier local (mode hors ligne) -->
+<script>if(location.protocol!=="file:"){var _l=document.createElement("link");_l.rel="stylesheet";_l.href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Chakra+Petch:wght@600;700&display=swap";document.head.appendChild(_l);}</script>
 <title>Tournoi de volley</title>
 <style>
 :root{--red:#d90f27;--green:#15803d;--bg:#f3f5fb;--mut:#54608a;--line:#d9deef;--g0:#dcf3e6;--g1:#fff3cd;--g2:#fde3d6;--card:#fff;--txt:#141a33;--ink:#0b1030;--chip:#eceff9;--ibd:#b8c0dc;--hl:#fff5c2;--sel:#ffe94d;--tbd:rgba(0,0,0,.06);--shadow:rgba(20,30,80,.10);--doneb:#dcf3e6;--donec:#15803d;--brand:#0899b8;--brandfg:#04121c;--arb:#d92bb4;--arbfg:#1a0420;--yel:#f5c400;--yelfg:#1b1700;--nt:#0e7490;--arbx:#b0158f;--yelx:#8a5200;--me:#8a5200;--toast:#141a33;--neon:#0e7490;--stok:#15803d;--stko:#b91c1c;color-scheme:light}
@@ -467,6 +468,21 @@ const CFG={url:'https://vjkrjybfoulmpfrsbttw.supabase.co',key:'sb_publishable_fP
 const HDR={'apikey':CFG.key,'Content-Type':'application/json'};
 if(/^eyJ/.test(CFG.key))HDR.Authorization='Bearer '+CFG.key;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* Deux modes dans cette même page :
+   - servie par le site : l'état vit dans la base (Supabase) ;
+   - enregistrée sur un ordinateur et ouverte comme fichier : mode hors ligne, l'état vit dans le navigateur. */
+const LOCAL=location.protocol==='file:';
+if(LOCAL)document.title='Tournoi de volley – hors ligne';
+let STORE_OK=true;
+/* Réglages mémorisés dans le navigateur (onglet, équipe, code…) : préfixe propre au mode, et jamais d'erreur si le stockage est bloqué. */
+const ls={
+  k:LOCAL?'solo_':'',
+  get(n){try{return localStorage.getItem(this.k+n);}catch(e){return null;}},
+  set(n,v){try{localStorage.setItem(this.k+n,v);}catch(e){}},
+  del(n){try{localStorage.removeItem(this.k+n);}catch(e){}}
+};
+
+/* ----- Stockage en ligne ----- */
 async function sb(path,opt){
   /* 3 essais en cas de coupure réseau ou d'erreur serveur ; pas de nouvel essai pour une erreur 4xx */
   let err;
@@ -483,9 +499,41 @@ async function sb(path,opt){
   }
   throw err;
 }
-async function fetchVersion(){const a=await sb('/rest/v1/tournoi_state?id=eq.1&select=version');if(!a.length)throw new Error('vide');return a[0].version;}
-async function fetchRow(){const a=await sb('/rest/v1/tournoi_state?id=eq.1&select=version,data');if(!a.length)throw new Error('vide');return a[0];}
-const rpc=(name,args)=>sb('/rest/v1/rpc/'+name,{method:'POST',body:JSON.stringify(args)});
+const NET={
+  async fetchVersion(){const a=await sb('/rest/v1/tournoi_state?id=eq.1&select=version');if(!a.length)throw new Error('vide');return a[0].version;},
+  async fetchRow(){const a=await sb('/rest/v1/tournoi_state?id=eq.1&select=version,data');if(!a.length)throw new Error('vide');return a[0];},
+  rpc:(name,args)=>sb('/rest/v1/rpc/'+name,{method:'POST',body:JSON.stringify(args)})
+};
+
+/* ----- Stockage hors ligne (navigateur de cet ordinateur) ----- */
+const SKEY='solo_etat',HKEY='solo_hist';
+let MEM={version:0,data:defaultState()};
+function soloRead(){try{const s=localStorage.getItem(SKEY);if(s){const o=JSON.parse(s);if(o&&o.data&&typeof o.version==='number')return o;}}catch(e){}return MEM;}
+function soloWrite(o){
+  MEM=o;
+  try{localStorage.setItem(SKEY,JSON.stringify(o));STORE_OK=true;}catch(e){STORE_OK=false;}
+}
+function soloHist(old){
+  try{const h=JSON.parse(localStorage.getItem(HKEY)||'[]');h.push(old);while(h.length>20)h.shift();localStorage.setItem(HKEY,JSON.stringify(h));}catch(e){try{localStorage.removeItem(HKEY);}catch(e2){}}
+}
+const SOLO={
+  async fetchVersion(){return soloRead().version;},
+  async fetchRow(){const o=soloRead();return{version:o.version,data:clone(o.data)};},
+  async rpc(name,args){
+    if(name==='check_pin')return{ok:true};
+    if(name==='save_state'){
+      const cur=soloRead();
+      if(args.p_expected!==cur.version)return{ok:false,conflict:true};
+      soloHist({version:cur.version,data:cur.data});
+      soloWrite({version:cur.version+1,data:clone(args.p_data)});
+      return{ok:true,version:cur.version+1};
+    }
+    throw new Error('rpc inconnue');
+  }
+};
+const {fetchVersion,fetchRow,rpc}=LOCAL?SOLO:NET;
+/* Dernier état reçu du stockage : sert à télécharger une sauvegarde même quand le serveur ne répond plus. */
+let LAST=null;
 /* Une action = relire l'état le plus récent, l'appliquer, l'enregistrer ; si quelqu'un a modifié entre-temps, on recommence. */
 async function act(name,body){
   const fn=ACTIONS[name];if(!fn)return{error:'Requête invalide.'};
@@ -494,7 +542,7 @@ async function act(name,body){
     ST=normalize(clone(row.data));
     try{fn(body);}catch(e){if(e instanceof Err)return{error:e.msg,soft:e.soft};return{error:'Requête invalide.'};}
     const res=await rpc('save_state',{p_expected:row.version,p_data:ST,p_pin:pin||null});
-    if(res&&res.ok)return{ok:true,state:buildView({version:res.version,data:ST})};
+    if(res&&res.ok){LAST={version:res.version,data:clone(ST)};return{ok:true,state:buildView({version:res.version,data:ST})};}
     if(res&&res.conflict){await sleep(60+Math.random()*240);continue;}
     return{error:(res&&res.error)||'Enregistrement impossible.',auth:!!(res&&res.auth)};
   }
@@ -509,15 +557,16 @@ const hm=m=>{m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'
 let ORGA=false;
 const TABS_BASE=[['home','Accueil'],['matches','Matchs'],['rank','Classement'],['finals','Finales']];
 const tabsList=()=>TABS_BASE.concat(ORGA?[['admin','Réglages']]:[]);
-let S=null,tab=localStorage.getItem('tab')||'home',pin=localStorage.getItem('pin')||'',admin=false,my=localStorage.getItem('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
+let S=null,tab=ls.get('tab')||'home',pin=ls.get('pin')||'',admin=false,my=ls.get('team')||'',swapSel=null,lastVer=-1,online=true,pending=false;
 const nm=side=>side.t!=null?S.teams[side.t]:(side.label||'À définir');
 
 async function post(path,body,okMsg){
   const name=path.split('/').pop();
   let res;try{res=await act(name,body);}catch(e){toast('Connexion perdue');return null;}
-  if(res.error){toast(res.error);if(res.auth){ORGA=false;pin='';localStorage.removeItem('pin');render();}return res;}
+  if(res.error){toast(res.error);if(res.auth){ORGA=false;pin='';ls.del('pin');render();}return res;}
   S=res.state;lastVer=S.version;render();if(okMsg)toast(okMsg);return res;
 }
+function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);}
 let tt;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('on'),2600);}
 
 async function poll(){
@@ -525,7 +574,7 @@ async function poll(){
   if(CFG.url.indexOf('__')===0){$('#app').innerHTML='<section class="card"><h3>Configuration manquante</h3><p class="mut">Adresse et clé Supabase non renseignées dans la page.</p></section>';return;}
   try{
     const v=await fetchVersion();online=true;
-    if(!S||v!==lastVer){const row=await fetchRow();S=buildView(row);lastVer=row.version;render();}
+    if(!S||v!==lastVer){const row=await fetchRow();LAST=row;S=buildView(row);lastVer=row.version;render();}
   }catch(e){
     online=false;
     if(!S)$('#app').innerHTML='<section class="card"><h3>Connexion impossible</h3><p class="mut">Impossible de joindre le serveur du tournoi. Vérifiez votre connexion internet ; la page réessaie toute seule.</p></section>';
@@ -550,7 +599,7 @@ try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let
 function hTitle(t){const w=String(t).trim().split(/\s+/),n=w.length>=4?2:(w.length>=2?1:0);return n?`<h1>${esc(w.slice(0,-n).join(' '))}<span>${esc(w.slice(-n).join(' '))}</span></h1>`:`<h1>${esc(t)}</h1>`;}
 function drawHeader(){
   applyTheme();
-  $('#hdr').innerHTML=`<div>${hTitle(S?S.settings.title:'Tournoi de volley')}<small>Rondes suisses · 12 équipes · 3 terrains</small></div><div class="hr"><div class="st ${online?'ok':'ko'}">${online?'':'● hors ligne'}</div><button class="thm" data-act="theme" aria-label="${isDark()?'Mode clair':'Mode sombre'}">${isDark()?ICON.sun:ICON.moon}</button></div>`;
+  $('#hdr').innerHTML=`<div>${hTitle(S?S.settings.title:'Tournoi de volley')}<small>Rondes suisses · 12 équipes · 3 terrains${LOCAL?' · mode hors ligne':''}</small></div><div class="hr"><div class="st ${online?'ok':'ko'}">${LOCAL?(STORE_OK?'● enregistré sur cet ordinateur':'⚠ NON enregistré'):(online?'':'● hors ligne')}</div><button class="thm" data-act="theme" aria-label="${isDark()?'Mode clair':'Mode sombre'}">${isDark()?ICON.sun:ICON.moon}</button></div>`;
 }
 function drawTabs(){
   $('#tabs').innerHTML=tabsList().map(t=>`<button data-tab="${t[0]}" class="${tab===t[0]?'on':''}"${tab===t[0]?' aria-current="page"':''}>${ICON[t[0]]||''}<span>${t[1]}</span></button>`).join('');
@@ -621,6 +670,10 @@ function rHome(){
     h+=`<section class="card"><h3>Tournoi terminé 🎉</h3>${pod.length?`<div class="podium">${pod.map((x,i)=>`<div>${['🥇','🥈','🥉'][i]}<br>${esc(S.teams[x.t])}</div>`).join('')}</div>`:''}</section>`;
   }
   h+=`<section class="card"><h3>Planning</h3>${S.schedule.map(sl=>`<div class="pl ${sl.done?'done':sl===cur?'cur':''}"><span class="t">${hm(sl.start)}</span><span>${esc(sl.label)}</span><span class="chip ${sl.done?'done':sl===cur?'cur':''}">${sl.done?'terminé':sl===cur?'prochain':''}</span></div>`).join('')}</section>`;
+  if(LOCAL){
+    h+=`<section class="card"><h3>Mode hors ligne</h3><p class="mut">Tout est enregistré dans ce navigateur, sur cet ordinateur : ne videz pas les données du navigateur et rouvrez toujours ce fichier avec le même navigateur. Dans <b>Réglages</b>, téléchargez une sauvegarde après chaque ronde.</p></section>`;
+    return h;
+  }
   const svg=QR.svg(S.lan_url);
   h+=`<section class="card"><details><summary>📲 Partager ce site</summary><p class="mut" style="text-align:center">Scannez ce QR code ou saisissez l'adresse :</p><div class="qr">${svg}</div><div class="url">${esc(S.lan_url)}</div></details></section>`;
   h+=ORGA?`<section class="card"><h3>Mode organisateur <span class="chip done">actif</span></h3><p class="mut">Vous pouvez corriger les rondes passées, échanger des équipes et ouvrir l'onglet Réglages.</p><button class="btn sec" data-act="lock">Quitter le mode organisateur</button></section>`
@@ -683,7 +736,9 @@ function rAdmin(){
   <div><label>Créneau (min)</label><input type="number" id="s_slot" value="${s.slot}" inputmode="numeric"></div><div><label>Pause repas (min)</label><input type="number" id="s_pause" value="${s.pause}" inputmode="numeric"></div>
   <div><label>Classement (min)</label><input type="number" id="s_classement" value="${s.classement}" inputmode="numeric"></div><div><label>Remise des prix (min)</label><input type="number" id="s_remise" value="${s.remise}" inputmode="numeric"></div></div>
   <button class="btn" data-act="saveSettings">Enregistrer</button></section>`;
-  h+=`<section class="card"><h3>Sauvegarde</h3><p class="mut">Télécharge l'état complet du tournoi (noms, rondes, scores, finales) dans un fichier. Utile pour reprendre sur l'ordinateur de secours si le réseau ou le site tombe.</p><button class="btn sec" data-act="exportState">Télécharger une sauvegarde</button></section>`;
+  h+=`<section class="card"><h3>Sauvegarde</h3><p class="mut">Télécharge l'état complet du tournoi (noms, rondes, scores, finales) dans un fichier. ${LOCAL?'À faire après chaque ronde : c\'est votre seule copie en dehors de ce navigateur.':'À faire après chaque ronde : si la connexion tombe, ce fichier permet de continuer en mode hors ligne.'}</p><button class="btn sec" data-act="exportState">Télécharger une sauvegarde</button></section>`;
+  h+=`<section class="card"><h3>Reprendre une sauvegarde</h3><p class="mut">Remplace le tournoi actuel par le contenu d'un fichier de sauvegarde (téléchargé depuis le site en ligne ou depuis la version hors ligne).</p><input type="file" id="imp" accept=".json,application/json"></section>`;
+  if(!LOCAL)h+=`<section class="card"><h3>Version hors ligne</h3><p class="mut">Enregistre cette page sur l'ordinateur. Ouverte en double-clic, sans internet, elle fait tourner le tournoi sur ce seul ordinateur : reprenez-y votre dernière sauvegarde, puis saisissez tous les scores vous-même. À télécharger avant le tournoi.</p><button class="btn sec" data-act="dlOffline">Télécharger la version hors ligne</button></section>`;
   h+=`<section class="card"><h3>Zone sensible</h3><button class="btn sec" data-act="resetScores">Effacer tous les matchs et scores</button><button class="btn red" data-act="resetAll">Tout réinitialiser (y compris les noms)</button></section>`;
   return h;
 }
@@ -713,12 +768,12 @@ let LV=null;
 function openLive(ref){
   const f=findMatch(ref);if(!f)return;const{m,sl}=f;
   let a=m.sa==null?0:+m.sa,b=m.sb==null?0:+m.sb;
-  try{const o=JSON.parse(localStorage.getItem('live')||'null');if(o&&o.ref===ref&&Date.now()-o.t<1.08e7){a=o.a;b=o.b;}}catch(e){}
+  try{const o=JSON.parse(ls.get('live')||'null');if(o&&o.ref===ref&&Date.now()-o.t<1.08e7){a=o.a;b=o.b;}}catch(e){}
   LV={ref,a,b};document.documentElement.classList.add('lv');
   const side=(k,t,v)=>`<div class="lvc ${k}"><button class="lvp" data-lv="${k}+" aria-label="Un point pour ${esc(nm(t))}"><span class="lvnm">${esc(nm(t))}</span><span class="lvn" id="lv${k}" aria-live="polite">${v}</span><span class="lvh2">Touchez pour +1</span></button><button class="lvm" data-lv="${k}-" aria-label="Retirer un point à ${esc(nm(t))}">−1</button></div>`;
   $('#modal').innerHTML=`<div class="live" role="dialog" aria-label="Score en grand écran"><div class="lvt"><span>Terrain ${m.terrain} · ${esc(sl.label)}</span><button class="lvx" data-act="closeModal">Fermer</button></div><div class="lvb">${side('a',m.a,a)}${side('b',m.b,b)}</div><div class="lvf"><button class="btn sec" data-lv="z">0 – 0</button><button class="btn sec" data-lv="man">Saisie manuelle</button><button class="btn lvok" data-lv="ok">Valider le score</button></div></div>`;
 }
-function lvDraw(){const a=$('#lva'),b=$('#lvb');if(a)a.textContent=LV.a;if(b)b.textContent=LV.b;try{localStorage.setItem('live',JSON.stringify({ref:LV.ref,a:LV.a,b:LV.b,t:Date.now()}));}catch(e){}}
+function lvDraw(){const a=$('#lva'),b=$('#lvb');if(a)a.textContent=LV.a;if(b)b.textContent=LV.b;ls.set('live',JSON.stringify({ref:LV.ref,a:LV.a,b:LV.b,t:Date.now()}));}
 function lvAction(k){
   if(!LV)return;
   if(k==='ok'){if(LV.a===0&&LV.b===0&&!confirm('Enregistrer 0 – 0 ?'))return;sendScore(LV.ref,LV.a,LV.b,false);return;}
@@ -733,7 +788,7 @@ async function sendScore(ref,sa,sb,force){
   const res=await post('/api/score',body);
   if(!res)return;
   if(res.error){if(res.soft&&confirm(res.error+'\n\nEnregistrer quand même ?'))return sendScore(ref,sa,sb,true);return;}
-  closeModal();try{localStorage.removeItem('live');}catch(e){}toast(sa==null?'Score effacé':'Score enregistré');
+  closeModal();ls.del('live');toast(sa==null?'Score effacé':'Score enregistré');
 }
 async function doSwap(id){
   if(!swapSel){swapSel=id;render();return;}
@@ -748,19 +803,28 @@ async function gen(r,re){
 }
 const actions={
   async exportState(){
+    /* Si le serveur ne répond pas, on enregistre le dernier état que cette page a reçu. */
+    let row,old=false;
+    try{row=await fetchRow();}catch(e){row=LAST;old=true;}
+    if(!row){toast('Sauvegarde impossible');return;}
     try{
-      const row=await fetchRow(),blob=new Blob([JSON.stringify({version:row.version,data:row.data},null,1)],{type:'application/json'}),a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);a.download='sauvegarde_tournoi_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json';
-      document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},800);toast('Sauvegarde téléchargée');
+      download(new Blob([JSON.stringify({version:row.version,data:row.data},null,1)],{type:'application/json'}),'sauvegarde_tournoi_'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+'.json');
+      toast(old?'Serveur injoignable : sauvegarde du dernier état reçu':'Sauvegarde téléchargée');
     }catch(e){toast('Sauvegarde impossible');}
+  },
+  async dlOffline(){
+    try{
+      const r=await fetch(location.href.split(/[?#]/)[0],{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+      download(new Blob([await r.text()],{type:'text/html'}),'tournoi_hors_ligne.html');toast('Version hors ligne téléchargée');
+    }catch(e){toast('Téléchargement impossible');}
   },
   async unlock(){
     const p=($('#pin').value||'').trim();if(!p){toast('Saisissez le code');return;}
     try{const res=await rpc('check_pin',{p_pin:p});
-      if(res.ok){pin=p;localStorage.setItem('pin',p);ORGA=true;toast('Mode organisateur activé');render();}else toast(res.error||'Code incorrect');}
+      if(res.ok){pin=p;ls.set('pin',p);ORGA=true;toast('Mode organisateur activé');render();}else toast(res.error||'Code incorrect');}
     catch(e){toast('Connexion perdue');}
   },
-  lock(){ORGA=false;pin='';try{localStorage.removeItem('pin');}catch(e){}if(tab==='admin')tab='home';render();},
+  lock(){ORGA=false;pin='';ls.del('pin');if(tab==='admin')tab='home';render();},
   saveTeams(){post('/api/teams',{names:Array.from(document.querySelectorAll('.tn')).map(i=>i.value)},'Noms enregistrés');},
   saveSettings(){const g=id=>$('#'+id).value;post('/api/settings',{title:g('s_title'),accueil:g('s_accueil'),start:g('s_start'),slot:g('s_slot'),pause:g('s_pause'),classement:g('s_classement'),remise:g('s_remise')},'Horaires enregistrés');},
   resetScores(){if(confirm('Effacer TOUS les matchs et scores ?'))post('/api/reset',{what:'scores'},'Matchs effacés');},
@@ -772,7 +836,7 @@ const actions={
 };
 document.addEventListener('click',e=>{
   const t=e.target;
-  const tb=t.closest('[data-tab]');if(tb){tab=tb.dataset.tab;localStorage.setItem('tab',tab);swapSel=null;pending=false;render();window.scrollTo(0,0);return;}
+  const tb=t.closest('[data-tab]');if(tb){tab=tb.dataset.tab;ls.set('tab',tab);swapSel=null;pending=false;render();window.scrollTo(0,0);return;}
   const lv=t.closest('[data-lv]');if(lv){lvAction(lv.dataset.lv);return;}
   const lm=t.closest('[data-live]');if(lm){openLive(lm.dataset.live);return;}
   const sc=t.closest('.sc[data-ref]');if(sc){openScore(sc.dataset.ref);return;}
@@ -782,10 +846,27 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modal').innerHTML){closeModal();return;}
   if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[data-live]')){e.preventDefault();openLive(e.target.dataset.live);}});
-document.addEventListener('change',e=>{if(e.target.id==='myteam'){my=e.target.value;localStorage.setItem('team',my);render();}});
+document.addEventListener('change',e=>{if(e.target.id==='myteam'){my=e.target.value;ls.set('team',my);render();}});
+/* Reprendre une sauvegarde : remplace l'état du tournoi par le contenu d'un fichier (organisateurs seulement, vérifié par le serveur en ligne). */
+document.addEventListener('change',async e=>{
+  if(e.target.id!=='imp'||!e.target.files||!e.target.files[0])return;
+  let d;
+  try{
+    const o=JSON.parse(await e.target.files[0].text());d=(o&&o.data&&!o.teams)?o.data:o;
+    if(!d||!Array.isArray(d.teams)||d.teams.length!==N_TEAMS||!Array.isArray(d.rounds)||d.rounds.length!==N_ROUNDS)throw new Error('format');
+  }catch(err){toast('Fichier de sauvegarde invalide');e.target.value='';return;}
+  if(!confirm('Remplacer le tournoi actuel par cette sauvegarde ?')){e.target.value='';return;}
+  try{
+    const row=await fetchRow(),res=await rpc('save_state',{p_expected:row.version,p_data:d,p_pin:pin||null});
+    if(res&&res.ok){const r2=await fetchRow();LAST=r2;S=buildView(r2);lastVer=r2.version;render();toast('Sauvegarde reprise');}
+    else toast(res&&res.conflict?'Le tournoi vient de changer, réessayez.':(res&&res.error)||'Reprise impossible');
+  }catch(err){toast('Connexion perdue');}
+});
 
 (async function boot(){
-  /*boot-admin*/admin=true;if(pin){try{const r=await rpc('check_pin',{p_pin:pin});ORGA=!!r.ok;if(!r.ok){pin='';localStorage.removeItem('pin');}}catch(e){}}if(!ORGA&&tab==='admin')tab='home';
+  admin=true;
+  if(LOCAL){ORGA=true;pin='';try{localStorage.setItem('solo_test','1');localStorage.removeItem('solo_test');}catch(e){STORE_OK=false;}}
+  else{if(pin){try{const r=await rpc('check_pin',{p_pin:pin});ORGA=!!r.ok;if(!r.ok){pin='';ls.del('pin');}}catch(e){}}if(!ORGA&&tab==='admin')tab='home';}
   await poll();setInterval(poll,5000);
 })();
 </script>
